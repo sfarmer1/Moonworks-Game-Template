@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace MoonworksTemplateGame.Data;
+namespace Tactician.Data;
 
 // We can't store strings in ECS because they are managed types!
 public static class TextStorage {

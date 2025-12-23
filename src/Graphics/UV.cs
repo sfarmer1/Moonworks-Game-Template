@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace MoonworksTemplateGame.Graphics;
+namespace Tactician.Graphics;
 
 public struct UV {
     public Vector2 Position { get; }

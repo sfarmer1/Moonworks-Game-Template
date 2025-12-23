@@ -1,12 +1,12 @@
 using System;
 using MoonTools.ECS;
 using MoonWorks.Audio;
-using MoonworksTemplateGame.Content;
-using MoonworksTemplateGame.Data;
-using MoonworksTemplateGame.Messages;
-using MoonworksTemplateGame.Utility;
+using Tactician.Content;
+using Tactician.Utility;
+using Tactician.Data;
+using Tactician.Messages;
 
-namespace MoonworksTemplateGame.Systems;
+namespace Tactician.Systems;
 
 public class AudioSystem : MoonTools.ECS.System {
     private readonly AudioDevice _audioDevice;

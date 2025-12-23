@@ -1,4 +1,4 @@
-namespace MoonworksTemplateGame.Data;
+namespace Tactician.Data;
 
 public static class AudioArrays {
     // Add arrays of StaticSoundIDs here like this

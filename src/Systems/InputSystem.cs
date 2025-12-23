@@ -1,9 +1,9 @@
 using System;
 using MoonTools.ECS;
 using MoonWorks.Input;
-using MoonworksTemplateGame.Components;
+using Tactician.Components;
 
-namespace MoonworksTemplateGame.Systems;
+namespace Tactician.Systems;
 
 public struct InputState {
     public ButtonState Left { get; set; }

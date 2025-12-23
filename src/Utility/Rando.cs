@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace MoonworksTemplateGame.Utility;
+namespace Tactician.Utility;
 
 public static class Rando {
     private static Random Rand { get; } = new();

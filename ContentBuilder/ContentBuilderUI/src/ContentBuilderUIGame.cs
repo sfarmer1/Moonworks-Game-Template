@@ -102,7 +102,7 @@ namespace ContentBuilderUI
 
 			
 			
-			if(RuntimeInformation.IsOSPlatform(OSPlatform.OSX)){
+			// if(RuntimeInformation.IsOSPlatform(OSPlatform.OSX)){
 				ImGuiVertexShader = Shader.Create(
 					GraphicsDevice,
 					RootTitleStorage,
@@ -128,32 +128,32 @@ namespace ContentBuilderUI
 						NumSamplers = 1
 					}
 				); 
-			} 
-			else {
-				ImGuiVertexShader = Shader.Create(
-					GraphicsDevice,
-					RootTitleStorage,
-					Path.Combine(ShaderContentPath, "ImGui.vert.spv"),
-					"main",
-					new ShaderCreateInfo {
-						Format = ShaderFormat.SPIRV,
-						Stage = ShaderStage.Vertex,
-						NumUniformBuffers = 1
-					}
-				);
-
-				ImGuiFragmentShader = Shader.Create(
-					GraphicsDevice,
-					RootTitleStorage,
-					Path.Combine(ShaderContentPath, "ImGui.frag.spv"),
-					"main",
-					new ShaderCreateInfo {
-						Format = ShaderFormat.SPIRV,
-						Stage = ShaderStage.Fragment,
-						NumSamplers = 1
-					}
-				);
-			}
+			// } 
+			// else {
+			// 	ImGuiVertexShader = Shader.Create(
+			// 		GraphicsDevice,
+			// 		RootTitleStorage,
+			// 		Path.Combine(ShaderContentPath, "ImGui.vert.spv"),
+			// 		"main",
+			// 		new ShaderCreateInfo {
+			// 			Format = ShaderFormat.SPIRV,
+			// 			Stage = ShaderStage.Vertex,
+			// 			NumUniformBuffers = 1
+			// 		}
+			// 	);
+			//
+			// 	ImGuiFragmentShader = Shader.Create(
+			// 		GraphicsDevice,
+			// 		RootTitleStorage,
+			// 		Path.Combine(ShaderContentPath, "ImGui.frag.spv"),
+			// 		"main",
+			// 		new ShaderCreateInfo {
+			// 			Format = ShaderFormat.SPIRV,
+			// 			Stage = ShaderStage.Fragment,
+			// 			NumSamplers = 1
+			// 		}
+			// 	);
+			// }
 
 			ImGuiSampler = Sampler.Create(GraphicsDevice, SamplerCreateInfo.LinearClamp);
 

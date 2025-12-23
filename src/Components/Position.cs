@@ -1,7 +1,7 @@
 using System;
 using System.Numerics;
 
-namespace MoonworksTemplateGame.Components;
+namespace Tactician.Components;
 
 public readonly record struct Position {
     private readonly Vector2 _rawPosition;

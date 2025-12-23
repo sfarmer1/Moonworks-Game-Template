@@ -2,15 +2,15 @@ using System;
 using MoonWorks;
 using MoonWorks.Graphics;
 using MoonWorks.Input;
-using MoonworksTemplateGame.GameStates;
-using MoonworksTemplateGame.Content;
+using Tactician.Content;
+using Tactician.GameStates;
 
-namespace MoonworksTemplateGame;
+namespace Tactician;
 
-public class MoonworksTemplateGame : Game {
+public class TacticianGame : Game {
     private GameState _currentState;
 
-    public MoonworksTemplateGame(
+    public TacticianGame(
         AppInfo appInfo,
         WindowCreateInfo windowCreateInfo,
         FramePacingSettings framePacingSettings,

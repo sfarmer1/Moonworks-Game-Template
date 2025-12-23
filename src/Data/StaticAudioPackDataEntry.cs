@@ -1,4 +1,4 @@
-namespace MoonworksTemplateGame.Data;
+namespace Tactician.Data;
 
 public struct StaticAudioPackDataEntry {
     public int Start;

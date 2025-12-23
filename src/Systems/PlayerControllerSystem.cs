@@ -2,12 +2,12 @@ using System;
 using System.Numerics;
 using MoonTools.ECS;
 using MoonWorks.Graphics;
-using MoonworksTemplateGame.Components;
-using MoonworksTemplateGame.Content;
-using MoonworksTemplateGame.Utility;
+using Tactician.Content;
+using Tactician.Components;
+using Tactician.Utility;
 using Filter = MoonTools.ECS.Filter;
 
-namespace MoonworksTemplateGame.Systems;
+namespace Tactician.Systems;
 
 public class PlayerControllerSystem : MoonTools.ECS.System {
     private readonly float _maxSpeedBase = 128f;

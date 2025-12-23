@@ -1,8 +1,8 @@
 using System.Numerics;
 using MoonWorks.Graphics;
-using MoonworksTemplateGame.Data;
+using Tactician.Data;
 
-namespace MoonworksTemplateGame.Components;
+namespace Tactician.Components;
 
 public readonly record struct Player(int Index);
 public readonly record struct Orientation(float Angle);

@@ -105,7 +105,7 @@ public static class Operations
     public static Preferences Preferences;
 
     public static string PreferencesFolderLocation =
-        $"{Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "MoonworksTemplateGameContentBuilder")}";
+        $"{Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "TacticianContentBuilder")}";
 
     private static string PreferencesFileLocation =
         Path.Combine(
@@ -128,7 +128,7 @@ public static class Operations
         if (!Path.Exists(path)) return false;
         if (!Directory.Exists(path)) return false;
 
-        if (File.Exists(Path.Combine(path, "MoonworksTemplateGame.sln")))
+        if (File.Exists(Path.Combine(path, "Tactician.sln")))
         {
             Preferences.GameDirectoryPath = path;
             InitializeTrackedDirectories();

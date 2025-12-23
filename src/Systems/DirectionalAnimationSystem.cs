@@ -1,11 +1,11 @@
 using System;
 using System.Numerics;
 using MoonTools.ECS;
-using MoonworksTemplateGame.Components;
-using MoonworksTemplateGame.Data;
-using MoonworksTemplateGame.Messages;
+using Tactician.Components;
+using Tactician.Data;
+using Tactician.Messages;
 
-namespace MoonworksTemplateGame.Systems;
+namespace Tactician.Systems;
 
 public class DirectionalAnimationSystem : MoonTools.ECS.System {
     private readonly Filter _directionFilter;

@@ -1,10 +1,10 @@
 using MoonTools.ECS;
 using MoonWorks.Audio;
-using MoonworksTemplateGame.Components;
-using MoonworksTemplateGame.Content;
-using MoonworksTemplateGame.Data;
+using Tactician.Content;
+using Tactician.Components;
+using Tactician.Data;
 
-namespace MoonworksTemplateGame.Messages;
+namespace Tactician.Messages;
 
 public readonly record struct PlayStaticSoundMessage(
     StaticSoundID StaticSoundID,

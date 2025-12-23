@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 using MoonWorks.AsyncIO;
 using MoonWorks.Audio;
 
-namespace MoonworksTemplateGame.Data;
+namespace Tactician.Data;
 
 [JsonSerializable(typeof(Dictionary<string, StaticAudioPackDataEntry>))]
 internal partial class StaticAudioPackDictionaryContext : JsonSerializerContext {

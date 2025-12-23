@@ -4,12 +4,12 @@ using MoonWorks;
 using MoonWorks.Graphics;
 using MoonWorks.Graphics.Font;
 using MoonWorks.Storage;
-using MoonworksTemplateGame.Components;
-using MoonworksTemplateGame.Content;
-using MoonworksTemplateGame.Data;
+using Tactician.Content;
+using Tactician.Components;
+using Tactician.Data;
 using Filter = MoonTools.ECS.Filter;
 
-namespace MoonworksTemplateGame.Graphics;
+namespace Tactician.Graphics;
 
 public class Renderer : MoonTools.ECS.Renderer {
     private readonly SpriteBatch _artSpriteBatch;

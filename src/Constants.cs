@@ -1,4 +1,4 @@
-namespace MoonworksTemplateGame;
+namespace Tactician;
 
 public static class Dimensions {
     public const int GAME_W = 640;

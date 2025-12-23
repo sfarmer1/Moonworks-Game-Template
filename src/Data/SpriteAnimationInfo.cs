@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using MoonworksTemplateGame.Components;
+using Tactician.Components;
 
-namespace MoonworksTemplateGame.Data;
+namespace Tactician.Data;
 
 public readonly record struct SpriteAnimationInfoID(int ID);
 

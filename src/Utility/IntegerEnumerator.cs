@@ -1,4 +1,4 @@
-namespace MoonworksTemplateGame.Utility;
+namespace Tactician.Utility;
 
 public ref struct IntegerEnumerator {
     private readonly int _end;

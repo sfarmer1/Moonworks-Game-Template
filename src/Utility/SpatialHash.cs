@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using MoonworksTemplateGame.Components;
+using Tactician.Components;
 
-namespace MoonworksTemplateGame.Utility;
+namespace Tactician.Utility;
 
 /// <summary>
 ///     Used to quickly check if two shapes are potentially overlapping.

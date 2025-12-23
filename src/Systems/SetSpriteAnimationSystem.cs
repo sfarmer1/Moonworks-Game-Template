@@ -1,9 +1,9 @@
 using System;
 using MoonTools.ECS;
-using MoonworksTemplateGame.Components;
-using MoonworksTemplateGame.Messages;
+using Tactician.Components;
+using Tactician.Messages;
 
-namespace MoonworksTemplateGame.Systems;
+namespace Tactician.Systems;
 
 public class SetSpriteAnimationSystem(World world) : MoonTools.ECS.System(world) {
     public override void Update(TimeSpan delta) {

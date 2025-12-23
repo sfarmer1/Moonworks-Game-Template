@@ -1,9 +1,9 @@
 using System.Numerics;
 using MoonWorks.Graphics;
-using MoonworksTemplateGame.Data;
-using MoonworksTemplateGame.Graphics;
+using Tactician.Data;
+using Tactician.Graphics;
 
-namespace MoonworksTemplateGame.Components;
+namespace Tactician.Components;
 
 public struct Sprite {
     public TexturePageID TexturePageID { get; }

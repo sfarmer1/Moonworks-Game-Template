@@ -1,13 +1,13 @@
 using System;
 using MoonTools.ECS;
 using MoonWorks.Graphics;
-using MoonworksTemplateGame.Components;
-using MoonworksTemplateGame.Content;
-using MoonworksTemplateGame.Data;
-using MoonworksTemplateGame.Utility;
+using Tactician.Content;
+using Tactician.Components;
+using Tactician.Data;
+using Tactician.Utility;
 using Filter = MoonTools.ECS.Filter;
 
-namespace MoonworksTemplateGame.Systems;
+namespace Tactician.Systems;
 
 public enum Category {
     Animals,

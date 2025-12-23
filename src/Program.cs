@@ -3,11 +3,11 @@ using System.IO;
 using MoonWorks;
 using MoonWorks.Graphics;
 
-namespace MoonworksTemplateGame;
+namespace Tactician;
 
 internal class Program {
 	private static readonly string UserDataDirectory =
-        $"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MoonworksGameTemplate")}";
+        $"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Tactician")}";
 
     private static void Main(string[] args) {
         if (!Directory.Exists(UserDataDirectory)) Directory.CreateDirectory(UserDataDirectory);
@@ -18,25 +18,25 @@ internal class Program {
         
 #if DEBUG
         var windowCreateInfo = new WindowCreateInfo {
-            WindowWidth = 1280,
-            WindowHeight = 720,
-            WindowTitle = "Moonworks Game Template",
+            WindowWidth = 640,
+            WindowHeight = 360,
+            WindowTitle = "Tactician",
             ScreenMode = ScreenMode.Windowed
         };
         debugMode = true;
 #else
 			WindowCreateInfo windowCreateInfo = new WindowCreateInfo {
-				WindowWidth = 1280,
-				WindowHeight = 720,
-				WindowTitle = "Moonworks Game Template",
+				WindowWidth = 640,
+				WindowHeight = 360,
+				WindowTitle = "Tactician",
 				ScreenMode = ScreenMode.Fullscreen
 			};
 #endif
 
         var framePacingSettings = FramePacingSettings.CreateLatencyOptimized(60);
 
-		var appInfo = new AppInfo("TEMPLATE_ORGANIZATION", "MoonworksGameTemplate");
-		var game = new global::MoonworksTemplateGame.MoonworksTemplateGame(
+		var appInfo = new AppInfo("TEMPLATE_ORGANIZATION", "Tactician");
+		var game = new global::Tactician.TacticianGame(
 			appInfo,
 			windowCreateInfo,
 			framePacingSettings,

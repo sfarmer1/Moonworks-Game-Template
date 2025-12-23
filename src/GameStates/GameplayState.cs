@@ -1,17 +1,18 @@
 using System;
 using MoonTools.ECS;
 using MoonWorks;
-using MoonworksTemplateGame.Components;
-using MoonworksTemplateGame.Content;
-using MoonworksTemplateGame.Messages;
-using MoonworksTemplateGame.Systems;
-using Graphics_Renderer = MoonworksTemplateGame.Graphics.Renderer;
-using Renderer = MoonworksTemplateGame.Graphics.Renderer;
+using Tactician.Content;
+using Tactician.Components;
+using Tactician.Messages;
+using Tactician.Systems;
+using Graphics_Renderer = Tactician.Graphics.Renderer;
+using Renderer = Tactician.Graphics.Renderer;
+using Tactician_Graphics_Renderer = Tactician.Graphics.Renderer;
 
-namespace MoonworksTemplateGame.GameStates;
+namespace Tactician.GameStates;
 
 public class GameplayState : GameState {
-    private readonly MoonworksTemplateGame _game;
+    private readonly TacticianGame _game;
     private AudioSystem _audioSystem;
     private ColorAnimationSystem _colorAnimationSystem;
     private DirectionalAnimationSystem _directionalAnimationSystem;
@@ -19,13 +20,13 @@ public class GameplayState : GameState {
     private MotionSystem _motionSystem;
     private PlayerControllerSystem _playerControllerSystem;
 
-    private Graphics_Renderer _renderer;
+    private Tactician_Graphics_Renderer _renderer;
     private SetSpriteAnimationSystem _setSpriteAnimationSystem;
     private GameState _transitionState;
     private UpdateSpriteAnimationSystem _updateSpriteAnimationSystem;
     private World _world;
 
-    public GameplayState(MoonworksTemplateGame game, GameState transitionState) {
+    public GameplayState(TacticianGame game, GameState transitionState) {
         _game = game;
         _transitionState = transitionState;
     }
@@ -42,7 +43,7 @@ public class GameplayState : GameState {
         _colorAnimationSystem = new ColorAnimationSystem(_world);
         _directionalAnimationSystem = new DirectionalAnimationSystem(_world);
 
-        _renderer = new Graphics_Renderer(_world, _game.GraphicsDevice, _game.RootTitleStorage, _game.MainWindow.SwapchainFormat);
+        _renderer = new Tactician_Graphics_Renderer(_world, _game.GraphicsDevice, _game.RootTitleStorage, _game.MainWindow.SwapchainFormat);
 
         var topBorder = _world.CreateEntity();
         _world.Set(topBorder, new Position(0, 65));
