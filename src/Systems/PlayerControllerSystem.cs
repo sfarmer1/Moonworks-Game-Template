@@ -23,7 +23,7 @@ public class PlayerControllerSystem : MoonTools.ECS.System {
 
     public Entity SpawnPlayer(int index) {
         var player = World.CreateEntity();
-        World.Set(player, new Position(Dimensions.GAME_W * 0.47f + index * 48.0f, Dimensions.GAME_H * 0.25f));
+        World.Set(player, new Position(GameDimensions.WIDTH * 0.47f + index * 48.0f, GameDimensions.HEIGHT * 0.25f));
         World.Set(player,
             new SpriteAnimation(index == 0 ? SpriteAnimations.Char_Walk_Down : SpriteAnimations.Char2_Walk_Down, 0));
         World.Set(player, new Player(index));
@@ -121,7 +121,7 @@ public class PlayerControllerSystem : MoonTools.ECS.System {
             }
 
             Set(entity, new Velocity(velocity));
-            var depth = float.Lerp(100, 10, Get<Position>(entity).Y / (float)Dimensions.GAME_H);
+            var depth = float.Lerp(100, 10, Get<Position>(entity).Y / (float)GameDimensions.HEIGHT);
             Set(entity, new Depth(depth));
         }
     }

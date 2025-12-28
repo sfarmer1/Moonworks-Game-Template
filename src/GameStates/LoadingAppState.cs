@@ -10,8 +10,8 @@ using Tactician.Components;
 
 namespace Tactician.GameStates;
 
-public class LoadState : GameState {
-    private readonly TacticianGame _game;
+public class LoadingAppState : AppState {
+    private readonly App _app;
     private readonly GraphicsDevice _graphicsDevice;
     private readonly Stopwatch _loadTimer = new();
     private readonly TextBatch _textBatch;
@@ -19,12 +19,12 @@ public class LoadState : GameState {
     private readonly GraphicsPipeline _textPipeline;
 
     private readonly Stopwatch _timer = new();
-    private readonly GameState _transitionState;
+    private readonly AppState _transitionState;
     private AsyncFileLoader _asyncFileLoader;
 
-    public LoadState(TacticianGame game, GameState transitionState) {
-        _game = game;
-        _graphicsDevice = _game.GraphicsDevice;
+    public LoadingAppState(App app, AppState transitionState) {
+        _app = app;
+        _graphicsDevice = _app.GraphicsDevice;
         _asyncFileLoader = new AsyncFileLoader(_graphicsDevice);
         _transitionState = transitionState;
 
@@ -34,7 +34,7 @@ public class LoadState : GameState {
                 TargetInfo = new GraphicsPipelineTargetInfo {
                     ColorTargetDescriptions = [
                         new ColorTargetDescription {
-                            Format = game.MainWindow.SwapchainFormat,
+                            Format = app.MainWindow.SwapchainFormat,
                             BlendState = ColorTargetBlendState.PremultipliedAlphaBlend
                         }
                     ]
@@ -71,14 +71,14 @@ public class LoadState : GameState {
                 Logger.LogInfo($"Load finished in {_loadTimer.Elapsed.TotalMilliseconds}ms");
             }
             _timer.Stop();
-            _game.SetState(_transitionState);
+            _app.SetState(_transitionState);
         }
     }
 
     public override void Draw(Window window, double alpha) {
         var commandBuffer = _graphicsDevice.AcquireCommandBuffer();
 
-        var swapchainTexture = commandBuffer.AcquireSwapchainTexture(_game.MainWindow);
+        var swapchainTexture = commandBuffer.AcquireSwapchainTexture(_app.MainWindow);
         if (swapchainTexture != null) {
             _textBatch.Start();
             AddStringToTextBatch("L", 60, new Position(1640, 1020), 1.2f + 4 * (float)_timer.Elapsed.TotalSeconds);

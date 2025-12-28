@@ -6,7 +6,7 @@
 		<TargetName>Tactician</TargetName>
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
-		<StartupObject>Tactician.Program</StartupObject>
+		<StartupObject>Tactician.AppBootstrapper</StartupObject>
 		<RootNamespace>Tactician</RootNamespace>
 		<TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>

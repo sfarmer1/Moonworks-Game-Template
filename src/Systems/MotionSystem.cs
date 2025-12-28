@@ -8,7 +8,7 @@ namespace Tactician.Systems;
 
 public class MotionSystem : MoonTools.ECS.System {
     private readonly Filter _accelerateToPositionFilter;
-    private readonly SpatialHash<Entity> _solidSpatialHash = new(0, 0, Dimensions.GAME_W, Dimensions.GAME_H, 32);
+    private readonly SpatialHash<Entity> _solidSpatialHash = new(0, 0, GameDimensions.WIDTH, GameDimensions.HEIGHT, 32);
     private readonly Filter _velocityFilter;
     private readonly Filter _solidFilter;
 
@@ -117,8 +117,8 @@ public class MotionSystem : MoonTools.ECS.System {
             }
 
             if (Has<DestroyWhenOutOfBounds>(entity))
-                if (pos.X < -100 || pos.X > Dimensions.GAME_W + 100 || pos.Y < -100 ||
-                    pos.Y > Dimensions.GAME_H + 100) {
+                if (pos.X < -100 || pos.X > GameDimensions.WIDTH + 100 || pos.Y < -100 ||
+                    pos.Y > GameDimensions.HEIGHT + 100) {
                     Destroy(entity);
                 }
 

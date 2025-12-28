@@ -11,8 +11,8 @@ using Tactician_Graphics_Renderer = Tactician.Graphics.Renderer;
 
 namespace Tactician.GameStates;
 
-public class GameplayState : GameState {
-    private readonly TacticianGame _game;
+public class GameLoopAppState : AppState {
+    private readonly App _app;
     private AudioSystem _audioSystem;
     private ColorAnimationSystem _colorAnimationSystem;
     private DirectionalAnimationSystem _directionalAnimationSystem;
@@ -22,47 +22,47 @@ public class GameplayState : GameState {
 
     private Tactician_Graphics_Renderer _renderer;
     private SetSpriteAnimationSystem _setSpriteAnimationSystem;
-    private GameState _transitionState;
+    private AppState _transitionState;
     private UpdateSpriteAnimationSystem _updateSpriteAnimationSystem;
     private World _world;
 
-    public GameplayState(TacticianGame game, GameState transitionState) {
-        _game = game;
+    public GameLoopAppState(App app, AppState transitionState) {
+        _app = app;
         _transitionState = transitionState;
     }
 
     public override void Start() {
         _world = new World();
 
-        _inputSystem = new InputSystem(_world, _game.Inputs);
+        _inputSystem = new InputSystem(_world, _app.Inputs);
         _motionSystem = new MotionSystem(_world);
-        _audioSystem = new AudioSystem(_world, _game.AudioDevice);
+        _audioSystem = new AudioSystem(_world, _app.AudioDevice);
         _playerControllerSystem = new PlayerControllerSystem(_world);
         _setSpriteAnimationSystem = new SetSpriteAnimationSystem(_world);
         _updateSpriteAnimationSystem = new UpdateSpriteAnimationSystem(_world);
         _colorAnimationSystem = new ColorAnimationSystem(_world);
         _directionalAnimationSystem = new DirectionalAnimationSystem(_world);
 
-        _renderer = new Tactician_Graphics_Renderer(_world, _game.GraphicsDevice, _game.RootTitleStorage, _game.MainWindow.SwapchainFormat);
+        _renderer = new Tactician_Graphics_Renderer(_world, _app.GraphicsDevice, _app.RootTitleStorage, _app.MainWindow.SwapchainFormat);
 
         var topBorder = _world.CreateEntity();
         _world.Set(topBorder, new Position(0, 65));
-        _world.Set(topBorder, new Rectangle(0, 0, Dimensions.GAME_W, 10));
+        _world.Set(topBorder, new Rectangle(0, 0, GameDimensions.WIDTH, 10));
         _world.Set(topBorder, new Solid());
 
         var leftBorder = _world.CreateEntity();
         _world.Set(leftBorder, new Position(-10, 0));
-        _world.Set(leftBorder, new Rectangle(0, 0, 10, Dimensions.GAME_H));
+        _world.Set(leftBorder, new Rectangle(0, 0, 10, GameDimensions.HEIGHT));
         _world.Set(leftBorder, new Solid());
 
         var rightBorder = _world.CreateEntity();
-        _world.Set(rightBorder, new Position(Dimensions.GAME_W, 0));
-        _world.Set(rightBorder, new Rectangle(0, 0, 10, Dimensions.GAME_H));
+        _world.Set(rightBorder, new Position(GameDimensions.WIDTH, 0));
+        _world.Set(rightBorder, new Rectangle(0, 0, 10, GameDimensions.HEIGHT));
         _world.Set(rightBorder, new Solid());
 
         var bottomBorder = _world.CreateEntity();
-        _world.Set(bottomBorder, new Position(0, Dimensions.GAME_H));
-        _world.Set(bottomBorder, new Rectangle(0, 0, Dimensions.GAME_W, 10));
+        _world.Set(bottomBorder, new Position(0, GameDimensions.HEIGHT));
+        _world.Set(bottomBorder, new Rectangle(0, 0, GameDimensions.WIDTH, 10));
         _world.Set(bottomBorder, new Solid());
 
         var background = _world.CreateEntity();
@@ -71,7 +71,7 @@ public class GameplayState : GameState {
         _world.Set(background, new SpriteAnimation(SpriteAnimations.BG, 0));
 
         var uiBottomBackground = _world.CreateEntity();
-        _world.Set(uiBottomBackground, new Position(0, Dimensions.GAME_H - 40));
+        _world.Set(uiBottomBackground, new Position(0, GameDimensions.HEIGHT - 40));
         _world.Set(uiBottomBackground, new Depth(9));
         _world.Set(uiBottomBackground, new SpriteAnimation(SpriteAnimations.HUD_Bottom, 0));
 
@@ -114,7 +114,7 @@ public class GameplayState : GameState {
             _world.FinishUpdate();
             _audioSystem.Cleanup();
             _world.Dispose();
-            _game.SetState(_transitionState);
+            _app.SetState(_transitionState);
             return;
         }
 
@@ -122,13 +122,13 @@ public class GameplayState : GameState {
     }
 
     public override void Draw(Window window, double alpha) {
-        _renderer.Render(_game.MainWindow);
+        _renderer.Render(_app.MainWindow);
     }
 
     public override void End() {
     }
 
-    public void SetTransitionState(GameState state) {
+    public void SetTransitionState(AppState state) {
         _transitionState = state;
     }
 }

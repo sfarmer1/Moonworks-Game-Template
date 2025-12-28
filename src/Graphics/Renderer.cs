@@ -35,9 +35,9 @@ public class Renderer : MoonTools.ECS.Renderer {
         _textFilter = FilterBuilder.Include<Text>().Include<Position>().Build();
         _spriteAnimationFilter = FilterBuilder.Include<SpriteAnimation>().Include<Position>().Build();
 
-        _renderTexture = Texture.Create2D(_graphicsDevice, "Render Texture", Dimensions.GAME_W, Dimensions.GAME_H,
+        _renderTexture = Texture.Create2D(_graphicsDevice, "Render Texture", GameDimensions.WIDTH, GameDimensions.HEIGHT,
             swapchainFormat, TextureUsageFlags.ColorTarget | TextureUsageFlags.Sampler);
-        _depthTexture = Texture.Create2D(_graphicsDevice, "Depth Texture", Dimensions.GAME_W, Dimensions.GAME_H,
+        _depthTexture = Texture.Create2D(_graphicsDevice, "Depth Texture", GameDimensions.WIDTH, GameDimensions.HEIGHT,
             TextureFormat.D16Unorm, TextureUsageFlags.DepthStencilTarget);
 
         _spriteAtlasTexture = TextureAtlases.TP_Sprites.Texture;
@@ -205,8 +205,8 @@ public class Renderer : MoonTools.ECS.Renderer {
     public Matrix4x4 GetProjectionMatrix() {
         return Matrix4x4.CreateOrthographicOffCenter(
             0,
-            Dimensions.GAME_W,
-            Dimensions.GAME_H,
+            GameDimensions.WIDTH,
+            GameDimensions.HEIGHT,
             0,
             0.01f,
             1000

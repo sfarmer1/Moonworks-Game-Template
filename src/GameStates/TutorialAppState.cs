@@ -8,10 +8,10 @@ using Tactician.Graphics;
 
 namespace Tactician.GameStates;
 
-public class HowToPlayState : GameState {
-    private readonly TacticianGame _game;
+public class TutorialAppState : AppState {
+    private readonly App _game;
     private readonly GraphicsDevice _graphicsDevice;
-    private readonly GameState _transitionState;
+    private readonly AppState _transitionState;
 
     private readonly SpriteBatch _hiResSpriteBatch;
     private readonly Sampler _linearSampler;
@@ -21,7 +21,7 @@ public class HowToPlayState : GameState {
     private PersistentVoice _musicVoice;
     private AudioDataQoa _music;
 
-    public HowToPlayState(TacticianGame game, GameState transitionState) {
+    public TutorialAppState(App game, AppState transitionState) {
         _audioDevice = game.AudioDevice;
         _game = game;
         _graphicsDevice = game.GraphicsDevice;
@@ -30,7 +30,7 @@ public class HowToPlayState : GameState {
         _linearSampler = Sampler.Create(_graphicsDevice, SamplerCreateInfo.LinearClamp);
         _hiResSpriteBatch = new SpriteBatch(_graphicsDevice, game.RootTitleStorage, game.MainWindow.SwapchainFormat);
 
-        _renderTexture = Texture.Create2D(_graphicsDevice, Dimensions.GAME_W, Dimensions.GAME_H,
+        _renderTexture = Texture.Create2D(_graphicsDevice, GameDimensions.WIDTH, GameDimensions.HEIGHT,
             game.MainWindow.SwapchainFormat, TextureUsageFlags.ColorTarget | TextureUsageFlags.Sampler);
     }
 
@@ -97,8 +97,8 @@ public class HowToPlayState : GameState {
     private Matrix4x4 GetHiResProjectionMatrix() {
         return Matrix4x4.CreateOrthographicOffCenter(
             0,
-            Dimensions.GAME_W,
-            Dimensions.GAME_H,
+            GameDimensions.WIDTH,
+            GameDimensions.HEIGHT,
             0,
             0.01f,
             1000
