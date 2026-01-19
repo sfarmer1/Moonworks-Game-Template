@@ -1,6 +1,7 @@
 namespace Tactician.Data;
 
-public enum SoundCategory {
-    Generic,
-    Drone
+public enum SoundCategory
+{
+	Generic,
+	Drone
 }

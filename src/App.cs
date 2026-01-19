@@ -9,7 +9,7 @@ using Tactician.GameStates;
 
 namespace Tactician;
 
-public class App : Game 
+public class App : Game
 {
     private AppState _currentState;
 
@@ -19,42 +19,40 @@ public class App : Game
         FramePacingSettings framePacingSettings,
         ShaderFormat shaderFormats,
         bool debugMode
-    ) : base(appInfo, windowCreateInfo, framePacingSettings, shaderFormats, debugMode) 
+    ) : base(appInfo, windowCreateInfo, framePacingSettings, shaderFormats, debugMode)
     {
         TextureAtlases.Init(GraphicsDevice);
         StaticAudioPacks.Init(AudioDevice);
         StreamingAudio.Init(AudioDevice);
         Fonts.LoadAll(GraphicsDevice, RootTitleStorage);
 
-        var gameLoopAppState = new GameLoopAppState(this, null);
-        var loadState = new LoadingAppState(this, gameLoopAppState);
-        gameLoopAppState.SetTransitionState(loadState);
+        var inGameAppState = new InGameAppState(this, null);
+        var loadState = new LoadingAppState(this, inGameAppState);
+        inGameAppState.SetTransitionState(loadState);
 
         SetState(loadState);
     }
 
-    protected override void Update(TimeSpan dt) 
+    protected override void Update(TimeSpan dt)
     {
-        if (Inputs.Keyboard.IsPressed(KeyCode.F11)) 
+        if (Inputs.Keyboard.IsPressed(KeyCode.F11))
         {
-            if (MainWindow.ScreenMode == ScreenMode.Fullscreen)
-                MainWindow.SetScreenMode(ScreenMode.Windowed);
-            else
-                MainWindow.SetScreenMode(ScreenMode.Fullscreen);
+            MainWindow.SetScreenMode(MainWindow.ScreenMode == ScreenMode.Fullscreen
+                ? ScreenMode.Windowed
+                : ScreenMode.Fullscreen);
         }
 
         _currentState.Update(dt);
     }
 
-    protected override void Draw(double alpha) 
+    protected override void Draw(double alpha)
     {
         _currentState.Draw(MainWindow, alpha);
     }
 
-    protected override void Destroy() {
-    }
+    protected override void Destroy() { }
 
-    public void SetState(AppState appState) 
+    public void SetState(AppState appState)
     {
         _currentState?.End();
 

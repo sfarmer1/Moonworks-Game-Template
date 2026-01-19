@@ -5,17 +5,19 @@ using MoonWorks.Graphics;
 
 namespace Tactician;
 
-internal class AppBootstrapper 
+internal class AppBootstrapper
 {
-	private static readonly string UserDataDirectory =
+    private static readonly string UserDataDirectory =
         $"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Tactician")}";
 
-    private static void Main(string[] args) 
+    private static void Main(string[] args)
     {
-        if (!Directory.Exists(UserDataDirectory)) 
+        if (!Directory.Exists(UserDataDirectory))
         {
-	        Directory.CreateDirectory(UserDataDirectory);
-        };
+            Directory.CreateDirectory(UserDataDirectory);
+        }
+
+        ;
         AppDomain.CurrentDomain.UnhandledException += HandleUnhandledException;
 #if DEBUG
         var windowCreateInfo = new WindowCreateInfo {
@@ -35,18 +37,18 @@ internal class AppBootstrapper
 	    const bool debugMode = false;
 #endif
         var framePacingSettings = FramePacingSettings.CreateLatencyOptimized(60);
-		var appInfo = new AppInfo("RSA", "Tactician");
-		var game = new global::Tactician.App(
-			appInfo,
-			windowCreateInfo,
-			framePacingSettings,
-			ShaderFormat.SPIRV | ShaderFormat.DXBC | ShaderFormat.MSL,
-			debugMode
-		);
+        var appInfo = new AppInfo("RSA", "Tactician");
+        var game = new global::Tactician.App(
+            appInfo,
+            windowCreateInfo,
+            framePacingSettings,
+            ShaderFormat.SPIRV | ShaderFormat.DXBC | ShaderFormat.MSL,
+            debugMode
+        );
         game.Run();
     }
 
-    private static void HandleUnhandledException(object sender, UnhandledExceptionEventArgs args) 
+    private static void HandleUnhandledException(object sender, UnhandledExceptionEventArgs args)
     {
         var e = (Exception)args.ExceptionObject;
         Logger.LogError("Unhandled exception caught!");
