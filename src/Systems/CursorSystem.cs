@@ -34,12 +34,6 @@ public class CursorSystem : MoonTools.ECS.System
 			var cursorPosition = Get<Position>(cursor);
 			foreach (var selectedThing in _selectedThingFilter.Entities)
 			{
-				var selectedThingPosition = Get<Position>(selectedThing);
-				if (selectedThingPosition != cursorPosition)
-				{
-					continue;
-				}
-
 				//
 				// We have the correct cursor and currently selected thing
 				//
@@ -58,24 +52,50 @@ public class CursorSystem : MoonTools.ECS.System
 				else
 					direction = Direction.None;
 
-				var newPosition = direction switch {
-					Direction.Left when HasOutRelation<GamepadNavLeft>(selectedThing) =>
-						GetPositionFromRelation<GamepadNavLeft>(selectedThing),
-					Direction.Right when HasOutRelation<GamepadNavRight>(selectedThing) =>
-						GetPositionFromRelation<GamepadNavRight>(selectedThing),
-					Direction.Up when HasOutRelation<GamepadNavUp>(selectedThing) =>
-						GetPositionFromRelation<GamepadNavUp>(selectedThing),
-					Direction.Down when HasOutRelation<GamepadNavDown>(selectedThing) =>
-						GetPositionFromRelation<GamepadNavDown>(selectedThing),
-					Direction.None =>
-						cursorPosition,
-					_ =>
-						throw new ArgumentOutOfRangeException()
-				};
+				var newPosition  = new Position();
+				var newSelection = new Entity();
+				switch (direction)
+				{
+					case Direction.Left when HasOutRelation<GamepadNavLeft>(selectedThing):
+						newPosition = GetPositionFromRelation<GamepadNavLeft>(selectedThing);
+						World.Remove<Selected>(selectedThing);
+						newSelection = OutRelationSingleton<GamepadNavLeft>(selectedThing);
+						World.Set(newSelection, new Selected());
+						Set(cursor, newPosition);
+						Logger.LogInfo($"Moving cursor left to {newPosition}");
+						break;
+					case Direction.Right when HasOutRelation<GamepadNavRight>(selectedThing):
+						newPosition = GetPositionFromRelation<GamepadNavRight>(selectedThing);
+						World.Remove<Selected>(selectedThing);
+						newSelection = OutRelationSingleton<GamepadNavRight>(selectedThing);
+						World.Set(newSelection, new Selected());
+						Set(cursor, newPosition);
+						Logger.LogInfo($"Moving cursor right to {newPosition}");
+						break;
+					case Direction.Up when HasOutRelation<GamepadNavUp>(selectedThing):
+						newPosition = GetPositionFromRelation<GamepadNavUp>(selectedThing);
+						World.Remove<Selected>(selectedThing);
+						newSelection = OutRelationSingleton<GamepadNavUp>(selectedThing);
+						World.Set(newSelection, new Selected());
+						Set(cursor, newPosition);
+						Logger.LogInfo($"Moving cursor up to {newPosition}");
+						break;
+					case Direction.Down when HasOutRelation<GamepadNavDown>(selectedThing):
+						newPosition = GetPositionFromRelation<GamepadNavDown>(selectedThing);
+						World.Remove<Selected>(selectedThing);
+						newSelection = OutRelationSingleton<GamepadNavDown>(selectedThing);
+						World.Set(newSelection, new Selected());
+						Set(cursor, newPosition);
+						Logger.LogInfo($"Moving cursor down to {newPosition}");
+						break;
+					case Direction.None:
+						newPosition = cursorPosition;
+						break;
+					default:
+						Logger.LogInfo("No way to navigate that direction");
+						break;
+				}
 
-				Logger.LogInfo($"Moving cursor to {newPosition}");
-
-				Set<Position>(cursor, newPosition);
 			}
 		}
 	}
