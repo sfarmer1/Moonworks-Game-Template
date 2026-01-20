@@ -86,13 +86,11 @@ public class CursorSystem : MoonTools.ECS.System
 						newSelection = OutRelationSingleton<GamepadNavDown>(selectedThing);
 						World.Set(newSelection, new Selected());
 						Set(cursor, newPosition);
-						Logger.LogInfo($"Moving cursor down to {newPosition}");
 						break;
 					case Direction.None:
 						newPosition = cursorPosition;
 						break;
 					default:
-						Logger.LogInfo("No way to navigate that direction");
 						break;
 				}
 
