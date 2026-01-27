@@ -46,7 +46,7 @@ public class ChessBoardSystem : MoonTools.ECS.System
 					: new Color(0.6f, 0.4f, 0.3f, 1f); // Dark brown
 				World.Set(square, new ColorBlend(squareColor));
 				World.Set(square, new SpriteScale(new System.Numerics.Vector2(ChessConstants.TILE_SIZE, ChessConstants.TILE_SIZE)));
-				World.Set(square, new Depth(0)); // Squares render at base level
+				World.Set(square, new Depth(10)); // Squares render at base level
 
 				_squares[file, rank] = square;
 			}
@@ -130,6 +130,8 @@ public class ChessBoardSystem : MoonTools.ECS.System
 		// Get screen position from square
 		var square = _squares[boardPos.File, boardPos.Rank];
 		var screenPos = Get<Position>(square);
+		screenPos = screenPos.SetX(screenPos.X + (int)MathF.Round(ChessConstants.TILE_SIZE * 0.5f));
+		screenPos = screenPos.SetY(screenPos.Y + (int)MathF.Round(ChessConstants.TILE_SIZE * 0.5f));
 		World.Set(piece, screenPos);
 
 		// Assign sprite based on piece type and owner
@@ -185,6 +187,8 @@ public class ChessBoardSystem : MoonTools.ECS.System
 		// Update position component
 		var square = _squares[to.File, to.Rank];
 		var screenPos = Get<Position>(square);
+		screenPos = screenPos.SetX(screenPos.X + (int)MathF.Round(ChessConstants.TILE_SIZE * 0.5f));
+		screenPos = screenPos.SetY(screenPos.Y + (int)MathF.Round(ChessConstants.TILE_SIZE * 0.5f));
 		Set(piece, screenPos);
 		Set(piece, to);
 	}

@@ -68,7 +68,7 @@ public class InGameAppState : AppState
 		_chessTurnSystem.InitializeGameState(gameStateEntity);
 
 		// Set up AI (optional - enable for AI vs player mode)
-		var randomAI = new RandomAI(_world, _chessBoardSystem, _moveValidationSystem, Player.Black);
+		var randomAI = new MinimaxAI(_world, _chessBoardSystem, _moveValidationSystem, Player.Black);
 		_chessAISystem.SetAI(randomAI);
 
 		// Enable AI for Black player
