@@ -26,3 +26,9 @@ public readonly record struct SetAnimationMessage(
 public readonly record struct PlaySongMessage;
 
 public readonly record struct EndGame;
+
+// Chess messages
+public readonly record struct ExecuteMoveMessage(ChessMove Move);
+public readonly record struct CheckMessage(Player PlayerInCheck);
+public readonly record struct CheckmateMessage(Player Winner);
+public readonly record struct StalemateMessage();

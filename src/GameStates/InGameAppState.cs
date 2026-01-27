@@ -1,6 +1,7 @@
 using System;
 using MoonTools.ECS;
 using MoonWorks;
+using Tactician.AI;
 using Tactician.Components;
 using Tactician.Messages;
 using Tactician.Singletons;
@@ -21,6 +22,15 @@ public class InGameAppState : AppState
 	private AppState                    _transitionState;
 	private World                       _world;
 
+	// Chess systems
+	private ChessBoardSystem            _chessBoardSystem;
+	private MoveValidationSystem        _moveValidationSystem;
+	private ChessTurnSystem             _chessTurnSystem;
+	private ChessMoveExecutionSystem    _chessMoveExecutionSystem;
+	private ChessInputSystem            _chessInputSystem;
+	private ChessHighlightSystem        _chessHighlightSystem;
+	private ChessAISystem               _chessAISystem;
+
 	public InGameAppState(App app, AppState transitionState)
 	{
 		_app             = app;
@@ -31,26 +41,49 @@ public class InGameAppState : AppState
 	{
 		_world = new World();
 
+		// Initialize core systems
 		_gamepadInputSystem = new GamepadInputSystem(_world, _app.Inputs);
 		_audioSystem        = new AudioSystem(_world, _app.AudioDevice);
-		_cursorSystem          = new CursorSystem(_world);
+		_cursorSystem       = new CursorSystem(_world);
 		_spriteAnimationSystem = new SpriteAnimationSystem(_world);
+
+		// Initialize chess systems
+		_chessBoardSystem = new ChessBoardSystem(_world);
+		_moveValidationSystem = new MoveValidationSystem(_world, _chessBoardSystem);
+		_chessTurnSystem = new ChessTurnSystem(_world, _chessBoardSystem, _moveValidationSystem);
+		_chessMoveExecutionSystem = new ChessMoveExecutionSystem(_world, _chessBoardSystem);
+		_chessInputSystem = new ChessInputSystem(_world, _chessBoardSystem, _chessTurnSystem);
+		_chessHighlightSystem = new ChessHighlightSystem(_world, _chessTurnSystem);
+		_chessAISystem = new ChessAISystem(_world, _chessTurnSystem);
+
+		// Set up AI (enable for AI vs player mode)
+		var randomAI = new RandomAI(_chessBoardSystem, _moveValidationSystem, Player.Black);
+		_chessAISystem.SetAI(randomAI);
+		_chessTurnSystem.EnableAI(Player.Black);
 
 		_renderer = new Tactician_Graphics_Renderer(_world, _app.GraphicsDevice, _app.RootTitleStorage,
 													_app.MainWindow.SwapchainFormat);
 
+		// Initialize chess board and pieces
+		_chessBoardSystem.InitializeBoard();
+		_chessBoardSystem.SpawnInitialPieces();
+
 		var gameInProgressEntity = _world.CreateEntity();
 		_world.Set(gameInProgressEntity, new GameInProgress());
-		var prefabSpawner = new PrefabSpawner(_world);
-		prefabSpawner.SpawnLevel_1();
 
 		_world.Send(new PlaySongMessage());
 	}
 
 	public override void Update(TimeSpan dt)
 	{
+		// Update systems in order
 		_gamepadInputSystem.Update(dt);
+		_chessInputSystem.Update(dt);
 		_cursorSystem.Update(dt);
+		_chessTurnSystem.Update(dt);
+		_chessMoveExecutionSystem.Update(dt);
+		_chessAISystem.Update(dt);
+		_chessHighlightSystem.Update(dt);
 		_spriteAnimationSystem.Update(dt);
 		_audioSystem.Update(dt);
 
