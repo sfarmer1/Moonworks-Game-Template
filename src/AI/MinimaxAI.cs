@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MoonTools.ECS;
 using Tactician.Components;
 using Tactician.Data;
 using Tactician.Systems;
@@ -7,6 +8,7 @@ namespace Tactician.AI;
 
 public class MinimaxAI : IChessAI
 {
+	private readonly World _world;
 	private readonly ChessBoardSystem _boardSystem;
 	private readonly MoveValidationSystem _validationSystem;
 	private readonly Player _player;
@@ -23,8 +25,9 @@ public class MinimaxAI : IChessAI
 		{ PieceType.King, 20000 }
 	};
 
-	public MinimaxAI(ChessBoardSystem boardSystem, MoveValidationSystem validationSystem, Player player, int maxDepth = 2)
+	public MinimaxAI(World world, ChessBoardSystem boardSystem, MoveValidationSystem validationSystem, Player player, int maxDepth = 2)
 	{
+		_world = world;
 		_boardSystem = boardSystem;
 		_validationSystem = validationSystem;
 		_player = player;
@@ -65,9 +68,9 @@ public class MinimaxAI : IChessAI
 		if (move.IsCapture)
 		{
 			var capturedPiece = _boardSystem.GetPieceAt(move.To);
-			if (capturedPiece.HasValue)
+			if (capturedPiece.HasValue && _world.Has<ChessPiece>(capturedPiece.Value))
 			{
-				var piece = _validationSystem.Get<ChessPiece>(capturedPiece.Value);
+				var piece = _world.Get<ChessPiece>(capturedPiece.Value);
 				value += PieceValues[piece.Type];
 			}
 		}
@@ -104,7 +107,10 @@ public class MinimaxAI : IChessAI
 				if (!pieceEntity.HasValue)
 					continue;
 
-				var piece = _validationSystem.Get<ChessPiece>(pieceEntity.Value);
+				if (!_world.Has<ChessPiece>(pieceEntity.Value))
+					continue;
+
+				var piece = _world.Get<ChessPiece>(pieceEntity.Value);
 				if (piece.Owner != player)
 					continue;
 
@@ -129,7 +135,10 @@ public class MinimaxAI : IChessAI
 				if (!pieceEntity.HasValue)
 					continue;
 
-				var piece = _validationSystem.Get<ChessPiece>(pieceEntity.Value);
+				if (!_world.Has<ChessPiece>(pieceEntity.Value))
+					continue;
+
+				var piece = _world.Get<ChessPiece>(pieceEntity.Value);
 				int pieceValue = PieceValues[piece.Type];
 
 				if (piece.Owner == _player)

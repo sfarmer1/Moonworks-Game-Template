@@ -51,15 +51,10 @@ public class InGameAppState : AppState
 		_chessBoardSystem = new ChessBoardSystem(_world);
 		_moveValidationSystem = new MoveValidationSystem(_world, _chessBoardSystem);
 		_chessTurnSystem = new ChessTurnSystem(_world, _chessBoardSystem, _moveValidationSystem);
-		_chessMoveExecutionSystem = new ChessMoveExecutionSystem(_world, _chessBoardSystem);
-		_chessInputSystem = new ChessInputSystem(_world, _chessBoardSystem, _chessTurnSystem);
-		_chessHighlightSystem = new ChessHighlightSystem(_world, _chessTurnSystem);
-		_chessAISystem = new ChessAISystem(_world, _chessTurnSystem);
-
-		// Set up AI (enable for AI vs player mode)
-		var randomAI = new RandomAI(_chessBoardSystem, _moveValidationSystem, Player.Black);
-		_chessAISystem.SetAI(randomAI);
-		_chessTurnSystem.EnableAI(Player.Black);
+		_chessMoveExecutionSystem = new ChessMoveExecutionSystem(_world, _chessBoardSystem, _chessTurnSystem);
+		_chessInputSystem = new ChessInputSystem(_world, _chessBoardSystem, _moveValidationSystem, _app.Inputs);
+		_chessHighlightSystem = new ChessHighlightSystem(_world);
+		_chessAISystem = new ChessAISystem(_world);
 
 		_renderer = new Tactician_Graphics_Renderer(_world, _app.GraphicsDevice, _app.RootTitleStorage,
 													_app.MainWindow.SwapchainFormat);
@@ -67,6 +62,17 @@ public class InGameAppState : AppState
 		// Initialize chess board and pieces
 		_chessBoardSystem.InitializeBoard();
 		_chessBoardSystem.SpawnInitialPieces();
+
+		// Create game state entity
+		var gameStateEntity = _world.CreateEntity();
+		_chessTurnSystem.InitializeGameState(gameStateEntity);
+
+		// Set up AI (optional - enable for AI vs player mode)
+		var randomAI = new RandomAI(_world, _chessBoardSystem, _moveValidationSystem, Player.Black);
+		_chessAISystem.SetAI(randomAI);
+
+		// Enable AI for Black player
+		_world.Set(gameStateEntity, new AiConfig(true, Player.Black));
 
 		var gameInProgressEntity = _world.CreateEntity();
 		_world.Set(gameInProgressEntity, new GameInProgress());
@@ -78,11 +84,11 @@ public class InGameAppState : AppState
 	{
 		// Update systems in order
 		_gamepadInputSystem.Update(dt);
-		_chessInputSystem.Update(dt);
 		_cursorSystem.Update(dt);
+		_chessInputSystem.Update(dt);
 		_chessTurnSystem.Update(dt);
-		_chessMoveExecutionSystem.Update(dt);
 		_chessAISystem.Update(dt);
+		_chessMoveExecutionSystem.Update(dt);
 		_chessHighlightSystem.Update(dt);
 		_spriteAnimationSystem.Update(dt);
 		_audioSystem.Update(dt);

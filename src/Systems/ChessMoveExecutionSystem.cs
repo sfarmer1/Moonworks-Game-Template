@@ -3,26 +3,44 @@ using MoonTools.ECS;
 using MoonWorks;
 using Tactician.Components;
 using Tactician.Data;
-using Tactician.Messages;
 
 namespace Tactician.Systems;
 
 public class ChessMoveExecutionSystem : MoonTools.ECS.System
 {
 	private readonly ChessBoardSystem _boardSystem;
+	private readonly ChessTurnSystem _turnSystem;
+	private readonly Filter _gameStateFilter;
+	private readonly Filter _validMoveHighlightFilter;
+	private readonly Filter _activePieceFilter;
 
-	public ChessMoveExecutionSystem(World world, ChessBoardSystem boardSystem) : base(world)
+	public ChessMoveExecutionSystem(World world, ChessBoardSystem boardSystem, ChessTurnSystem turnSystem) : base(world)
 	{
 		_boardSystem = boardSystem;
+		_turnSystem = turnSystem;
+		_gameStateFilter = FilterBuilder.Include<ChessGameState>().Include<PendingMove>().Build();
+		_validMoveHighlightFilter = FilterBuilder.Include<ValidMoveHighlight>().Build();
+		_activePieceFilter = FilterBuilder.Include<ActivePiece>().Build();
 	}
 
 	public override void Update(TimeSpan delta)
 	{
-		// Process move execution messages
-		if (SomeMessage<ExecuteMoveMessage>())
+		// Check for pending moves to execute
+		foreach (var gameState in _gameStateFilter.Entities)
 		{
-			var message = ReadMessage<ExecuteMoveMessage>();
-			ExecuteMove(message.Move);
+			var pendingMove = Get<PendingMove>(gameState);
+			ExecuteMove(pendingMove.Move);
+
+			// Clear pending move
+			Remove<PendingMove>(gameState);
+
+			// Clear selection state
+			ClearSelectionState(gameState);
+
+			// End turn
+			_turnSystem.EndTurn(gameState);
+
+			break; // Only one game state entity
 		}
 	}
 
@@ -71,7 +89,7 @@ public class ChessMoveExecutionSystem : MoonTools.ECS.System
 
 				var rookEntity = _boardSystem.GetPieceAt(rookTo);
 				if (rookEntity.HasValue && Has<HasNotMoved>(rookEntity.Value))
-					World.Remove<HasNotMoved>(rookEntity.Value);
+					Remove<HasNotMoved>(rookEntity.Value);
 
 				Logger.LogInfo("Kingside castle");
 			}
@@ -84,7 +102,7 @@ public class ChessMoveExecutionSystem : MoonTools.ECS.System
 
 				var rookEntity = _boardSystem.GetPieceAt(rookTo);
 				if (rookEntity.HasValue && Has<HasNotMoved>(rookEntity.Value))
-					World.Remove<HasNotMoved>(rookEntity.Value);
+					Remove<HasNotMoved>(rookEntity.Value);
 
 				Logger.LogInfo("Queenside castle");
 			}
@@ -95,7 +113,7 @@ public class ChessMoveExecutionSystem : MoonTools.ECS.System
 
 		// Remove HasNotMoved component
 		if (Has<HasNotMoved>(pieceEntity.Value))
-			World.Remove<HasNotMoved>(pieceEntity.Value);
+			Remove<HasNotMoved>(pieceEntity.Value);
 
 		// Handle pawn promotion
 		if (move.PromotionPiece != PieceType.None)
@@ -111,7 +129,7 @@ public class ChessMoveExecutionSystem : MoonTools.ECS.System
 		// Set EnPassantTarget if pawn moved two squares
 		if (move.PieceType == PieceType.Pawn && Math.Abs(move.To.Rank - move.From.Rank) == 2)
 		{
-			World.Set(pieceEntity.Value, new EnPassantTarget());
+			Set(pieceEntity.Value, new EnPassantTarget());
 			Logger.LogInfo("Set en passant target");
 		}
 	}
@@ -121,7 +139,26 @@ public class ChessMoveExecutionSystem : MoonTools.ECS.System
 		var filter = FilterBuilder.Include<EnPassantTarget>().Build();
 		foreach (var entity in filter.Entities)
 		{
-			World.Remove<EnPassantTarget>(entity);
+			Remove<EnPassantTarget>(entity);
+		}
+	}
+
+	private void ClearSelectionState(Entity gameState)
+	{
+		// Remove selected piece reference
+		if (Has<SelectedPieceRef>(gameState))
+			Remove<SelectedPieceRef>(gameState);
+
+		// Clear valid move highlights
+		foreach (var highlightEntity in _validMoveHighlightFilter.Entities)
+		{
+			Remove<ValidMoveHighlight>(highlightEntity);
+		}
+
+		// Clear active piece markers
+		foreach (var activePiece in _activePieceFilter.Entities)
+		{
+			Remove<ActivePiece>(activePiece);
 		}
 	}
 }

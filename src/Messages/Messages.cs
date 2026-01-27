@@ -27,8 +27,7 @@ public readonly record struct PlaySongMessage;
 
 public readonly record struct EndGame;
 
-// Chess messages
-public readonly record struct ExecuteMoveMessage(ChessMove Move);
+// Chess messages (for one-time events)
 public readonly record struct CheckMessage(Player PlayerInCheck);
 public readonly record struct CheckmateMessage(Player Winner);
 public readonly record struct StalemateMessage();
