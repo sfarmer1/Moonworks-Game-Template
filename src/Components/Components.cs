@@ -8,6 +8,7 @@ public readonly record struct HasPlayerOwner(int Index);
 public readonly record struct Orientation(float  Angle);
 public readonly record struct Solid;
 public readonly record struct Cursor;
+public readonly record struct DestroyedOnReset;
 public readonly record struct Selected;
 public readonly record struct ColorBlend(Color Color);
 public readonly record struct Depth(float      Value);

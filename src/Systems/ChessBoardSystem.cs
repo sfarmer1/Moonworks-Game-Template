@@ -38,6 +38,7 @@ public class ChessBoardSystem : MoonTools.ECS.System
 				World.Set(square, new Position(posX, posY));
 				World.Set(square, new BoardPosition(file, rank));
 				World.Set(square, new SpriteAnimation(SpriteAnimations.Pixel));
+				World.Set(square, new DestroyedOnReset());
 
 				// Alternate light/dark squares (chess board pattern)
 				var isLightSquare = (file + rank) % 2 == 0;
@@ -86,6 +87,7 @@ public class ChessBoardSystem : MoonTools.ECS.System
 		var firstSquarePos = Get<Position>(firstSquare);
 		World.Set(cursor, firstSquarePos);
 		World.Set(cursor, new CanReceiveDirectionalInput());
+		World.Set(cursor, new DestroyedOnReset());
 		World.Set(cursor, new HasPlayerOwner(0));
 		World.Set(cursor, new SpriteAnimation(SpriteAnimations.Effect_SpinningCoin));
 		World.Set(cursor, new Depth(-10)); // Cursor renders above everything
@@ -126,6 +128,7 @@ public class ChessBoardSystem : MoonTools.ECS.System
 		World.Set(piece, new ChessPiece(type, owner));
 		World.Set(piece, boardPos);
 		World.Set(piece, new HasNotMoved());
+		World.Set(piece, new DestroyedOnReset());
 
 		// Get screen position from square
 		var square = _squares[boardPos.File, boardPos.Rank];
@@ -203,6 +206,20 @@ public class ChessBoardSystem : MoonTools.ECS.System
 		{
 			World.Destroy(piece);
 			_pieces[pos.File, pos.Rank] = default;
+		}
+	}
+
+	public void ClearBoard()
+	{
+		// Reset internal tracking arrays
+		// Note: Entities are destroyed separately via DestroyedOnReset component filter
+		for (int rank = 0; rank < ChessConstants.BOARD_SIZE; rank++)
+		{
+			for (int file = 0; file < ChessConstants.BOARD_SIZE; file++)
+			{
+				_pieces[file, rank] = default;
+				_squares[file, rank] = default;
+			}
 		}
 	}
 

@@ -76,6 +76,7 @@ public class ChessTurnSystem : MoonTools.ECS.System
 		Set(gameStateEntity, new CurrentTurn(Player.White));
 		Set(gameStateEntity, new CurrentGamePhase(GamePhase.SelectingPiece));
 		Set(gameStateEntity, new AiConfig(false, Player.Black));
+		Set(gameStateEntity, new DestroyedOnReset());
 	}
 
 	// Called by ChessMoveExecutionSystem after a move is executed

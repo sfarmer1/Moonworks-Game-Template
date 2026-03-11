@@ -2,6 +2,7 @@ using System;
 using MoonTools.ECS;
 using MoonWorks.Input;
 using Tactician.Components;
+using Tactician.Messages;
 
 namespace Tactician.Systems;
 
@@ -13,9 +14,6 @@ public class ChessInputSystem : MoonTools.ECS.System
 	private readonly Filter _gameStateFilter;
 	private readonly Filter _selectedSquareFilter;
 	private readonly Filter _validMoveHighlightFilter;
-
-	private bool _confirmWasPressed;
-	private bool _cancelWasPressed;
 
 	public ChessInputSystem(World world, ChessBoardSystem boardSystem, MoveValidationSystem validationSystem, Inputs inputs) : base(world)
 	{
@@ -45,6 +43,22 @@ public class ChessInputSystem : MoonTools.ECS.System
 
 		var gameState = gameStateEntity.Value;
 
+		// Handle reset (R key) - works in any game state
+		var resetPressed = _inputs.Keyboard.IsPressed(KeyCode.R);
+		var resetWasPressed = Has<ResetButtonWasPressed>(gameState);
+
+		if (resetPressed && !resetWasPressed)
+		{
+			Send(new ResetGameMessage());
+			MoonWorks.Logger.LogInfo("Game reset requested");
+		}
+
+		// Update reset button state component
+		if (resetPressed)
+			Set(gameState, new ResetButtonWasPressed());
+		else
+			Remove<ResetButtonWasPressed>(gameState);
+
 		// Don't process input during AI turn or game over
 		if (Has<CurrentGamePhase>(gameState))
 		{
@@ -63,19 +77,32 @@ public class ChessInputSystem : MoonTools.ECS.System
 		                    _inputs.Keyboard.IsPressed(KeyCode.Backspace) ||
 		                    (_inputs.GamepadExists(0) && _inputs.GetGamepad(0).B.IsPressed);
 
+		// Get previous frame's button states from components
+		var confirmWasPressed = Has<ConfirmButtonWasPressed>(gameState);
+		var cancelWasPressed = Has<CancelButtonWasPressed>(gameState);
+
 		// Handle confirm (only on new press, not held)
-		if (confirmPressed && !_confirmWasPressed)
+		if (confirmPressed && !confirmWasPressed)
 		{
 			HandleConfirm(gameState);
 		}
-		_confirmWasPressed = confirmPressed;
 
 		// Handle cancel (only on new press, not held)
-		if (cancelPressed && !_cancelWasPressed)
+		if (cancelPressed && !cancelWasPressed)
 		{
 			HandleCancel(gameState);
 		}
-		_cancelWasPressed = cancelPressed;
+
+		// Update button state components for next frame
+		if (confirmPressed)
+			Set(gameState, new ConfirmButtonWasPressed());
+		else
+			Remove<ConfirmButtonWasPressed>(gameState);
+
+		if (cancelPressed)
+			Set(gameState, new CancelButtonWasPressed());
+		else
+			Remove<CancelButtonWasPressed>(gameState);
 	}
 
 	private void HandleConfirm(Entity gameState)

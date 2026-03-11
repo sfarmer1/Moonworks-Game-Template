@@ -21,7 +21,7 @@
 	</ItemGroup>
 
 	<PropertyGroup>
-		<DefaultItemExcludes>$(DefaultItemExcludes);lib\**\*;ContentBuilder\**\*</DefaultItemExcludes>
+		<DefaultItemExcludes>$(DefaultItemExcludes);lib\**\*;ContentBuilder\**\*;Tactician.Tests\**\*</DefaultItemExcludes>
 	</PropertyGroup>
 
 	<ItemGroup>

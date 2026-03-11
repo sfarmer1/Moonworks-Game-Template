@@ -52,3 +52,15 @@ public readonly record struct AiConfig(bool IsEnabled, Player AiPlayer);
 
 // Marker for the chess game state entity
 public readonly record struct ChessGameState;
+
+// === Input State Tracking Components (attached to game state entity) ===
+// These track the previous frame's input state to detect new button presses
+
+// Tracks whether confirm button was pressed last frame
+public readonly record struct ConfirmButtonWasPressed;
+
+// Tracks whether cancel button was pressed last frame
+public readonly record struct CancelButtonWasPressed;
+
+// Tracks whether reset button was pressed last frame
+public readonly record struct ResetButtonWasPressed;
