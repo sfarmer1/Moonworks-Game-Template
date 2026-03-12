@@ -50,6 +50,27 @@ public class SaveLoadManager
 	}
 
 	/// <summary>
+	/// Constructor for testing — accepts a custom save directory to avoid touching the real save path.
+	/// </summary>
+	internal SaveLoadManager(World world, ChessBoardSystem chessBoardSystem, string saveDirectory)
+	{
+		_world = world;
+		_chessBoardSystem = chessBoardSystem;
+		_saveDirectory = saveDirectory;
+
+		Directory.CreateDirectory(_saveDirectory);
+
+		_gameStateFilter = world.FilterBuilder
+			.Include<ChessGameState>()
+			.Build();
+
+		_pieceFilter = world.FilterBuilder
+			.Include<ChessPiece>()
+			.Include<BoardPosition>()
+			.Build();
+	}
+
+	/// <summary>
 	/// Extracts current game state into a ChessSaveData structure.
 	/// </summary>
 	public ChessSaveData ExtractSaveData()
