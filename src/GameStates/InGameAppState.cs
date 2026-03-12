@@ -1,9 +1,11 @@
 using System;
 using MoonTools.ECS;
 using MoonWorks;
+using MoonWorks.Input;
+using Tactician.AI;
 using Tactician.Components;
 using Tactician.Messages;
-using Tactician.Singletons;
+using Tactician.Serialization;
 using Tactician.Systems;
 using Tactician_Graphics_Renderer = Tactician.Graphics.Renderer;
 
@@ -20,6 +22,20 @@ public class InGameAppState : AppState
 	private SpriteAnimationSystem       _spriteAnimationSystem;
 	private AppState                    _transitionState;
 	private World                       _world;
+	private Filter						_resettableEntitiesFilter;
+
+	// Chess systems
+	private ChessBoardSystem            _chessBoardSystem;
+	private MoveValidationSystem        _moveValidationSystem;
+	private ChessTurnSystem             _chessTurnSystem;
+	private ChessMoveExecutionSystem    _chessMoveExecutionSystem;
+	private ChessInputSystem            _chessInputSystem;
+	private ChessHighlightSystem        _chessHighlightSystem;
+	private ChessAISystem               _chessAISystem;
+
+	// Save/Load
+	private SaveLoadManager             _saveLoadManager;
+	private TurnHistoryManager          _turnHistoryManager;
 
 	public InGameAppState(App app, AppState transitionState)
 	{
@@ -31,28 +47,172 @@ public class InGameAppState : AppState
 	{
 		_world = new World();
 
+		// Initialize core systems
 		_gamepadInputSystem = new GamepadInputSystem(_world, _app.Inputs);
 		_audioSystem        = new AudioSystem(_world, _app.AudioDevice);
-		_cursorSystem          = new CursorSystem(_world);
+		_cursorSystem       = new CursorSystem(_world);
 		_spriteAnimationSystem = new SpriteAnimationSystem(_world);
+
+		// Initialize chess systems
+		_chessBoardSystem = new ChessBoardSystem(_world);
+		_moveValidationSystem = new MoveValidationSystem(_world, _chessBoardSystem);
+		_chessTurnSystem = new ChessTurnSystem(_world, _chessBoardSystem, _moveValidationSystem);
+		_chessMoveExecutionSystem = new ChessMoveExecutionSystem(_world, _chessBoardSystem, _chessTurnSystem);
+		_chessInputSystem = new ChessInputSystem(_world, _chessBoardSystem, _moveValidationSystem, _app.Inputs);
+		_chessHighlightSystem = new ChessHighlightSystem(_world);
+		_chessAISystem = new ChessAISystem(_world);
 
 		_renderer = new Tactician_Graphics_Renderer(_world, _app.GraphicsDevice, _app.RootTitleStorage,
 													_app.MainWindow.SwapchainFormat);
 
-		var gameInProgressEntity = _world.CreateEntity();
-		_world.Set(gameInProgressEntity, new GameInProgress());
-		var prefabSpawner = new PrefabSpawner(_world);
-		prefabSpawner.SpawnLevel_1();
+		_resettableEntitiesFilter = _world.FilterBuilder.Include<DestroyedOnReset>().Build();
+
+		// Initialize save/load manager
+		_saveLoadManager = new SaveLoadManager(_world, _chessBoardSystem);
+		_turnHistoryManager = new TurnHistoryManager(_saveLoadManager);
+
+		InitializeEntities();
+
+		// Record initial game state for history
+		_turnHistoryManager.RecordCurrentState();
 
 		_world.Send(new PlaySongMessage());
 	}
 
+	private void InitializeEntities()
+	{
+		// Initialize chess board and pieces (creates entities with DestroyedOnReset)
+		_chessBoardSystem.InitializeBoard();
+		_chessBoardSystem.SpawnInitialPieces();
+
+		// Create game state entity
+		var gameStateEntity = _world.CreateEntity();
+		_chessTurnSystem.InitializeGameState(gameStateEntity);
+		_world.Set(gameStateEntity, new DestroyedOnReset()); // Mark for destruction on reset
+
+		// Set up AI (optional - enable for AI vs player mode)
+		var randomAi = new MinimaxAI(_world, _chessBoardSystem, _moveValidationSystem, Player.Black);
+		_chessAISystem.SetAI(randomAi);
+
+		// Enable AI for Black player
+		_world.Set(gameStateEntity, new AiConfig(true, Player.Black));
+
+		var gameInProgressEntity = _world.CreateEntity();
+		_world.Set(gameInProgressEntity, new GameInProgress());
+		_world.Set(gameInProgressEntity, new DestroyedOnReset());
+	}
+
 	public override void Update(TimeSpan dt)
 	{
+		// Check if shift is held
+		var shiftHeld = _app.Inputs.Keyboard.IsDown(KeyCode.LeftShift) || _app.Inputs.Keyboard.IsDown(KeyCode.RightShift);
+
+		// Handle save/load input for slots 1-10 (keys 1-9 and 0)
+		// Key 0 maps to slot 10
+		var numberKeys = new (KeyCode key, int slot)[]
+		{
+			(KeyCode.D1, 1),
+			(KeyCode.D2, 2),
+			(KeyCode.D3, 3),
+			(KeyCode.D4, 4),
+			(KeyCode.D5, 5),
+			(KeyCode.D6, 6),
+			(KeyCode.D7, 7),
+			(KeyCode.D8, 8),
+			(KeyCode.D9, 9),
+			(KeyCode.D0, 10)
+		};
+
+		foreach (var (key, slot) in numberKeys)
+		{
+			if (_app.Inputs.Keyboard.IsPressed(key))
+			{
+				if (shiftHeld)
+				{
+					// Shift+Number = Save
+					MoonWorks.Logger.LogInfo($"Save to slot {slot} requested");
+					_saveLoadManager.SaveToSlot(slot);
+				}
+				else
+				{
+					// Number = Load
+					MoonWorks.Logger.LogInfo($"Load from slot {slot} requested");
+					_world.FinishUpdate();
+					LoadGame(slot);
+					return;
+				}
+			}
+		}
+
+		// Keep F5/F9 for backward compatibility (uses slot 0/quicksave)
+		if (_app.Inputs.Keyboard.IsPressed(KeyCode.F5))
+		{
+			MoonWorks.Logger.LogInfo("Quick save requested (F5)");
+			_saveLoadManager.QuickSave();
+		}
+
+		if (_app.Inputs.Keyboard.IsPressed(KeyCode.F9))
+		{
+			MoonWorks.Logger.LogInfo("Quick load requested (F9)");
+			_world.FinishUpdate();
+			LoadGame(0);
+			return;
+		}
+
+		// Handle rewind/replay (Z = step backward, X = step forward)
+		if (_app.Inputs.Keyboard.IsPressed(KeyCode.Z))
+		{
+			var previousState = _turnHistoryManager.StepBackward();
+			if (previousState != null)
+			{
+				_world.FinishUpdate();
+				RestoreHistoryState(previousState);
+				return;
+			}
+		}
+
+		if (_app.Inputs.Keyboard.IsPressed(KeyCode.X))
+		{
+			var nextState = _turnHistoryManager.StepForward();
+			if (nextState != null)
+			{
+				_world.FinishUpdate();
+				RestoreHistoryState(nextState);
+				return;
+			}
+		}
+
+		// Update systems in order
 		_gamepadInputSystem.Update(dt);
 		_cursorSystem.Update(dt);
+
+		// Allow chess input and gameplay even when viewing history (for branching)
+		_chessInputSystem.Update(dt);
+		_chessTurnSystem.Update(dt);
+
+		// Always update AI system so it can resume after branching
+		// The AI will check internally if it should act
+		_chessAISystem.Update(dt);
+
+		_chessMoveExecutionSystem.Update(dt);
+
+		_chessHighlightSystem.Update(dt);
 		_spriteAnimationSystem.Update(dt);
 		_audioSystem.Update(dt);
+
+		// Record history when a turn is completed
+		// This handles branching automatically if viewing history
+		if (_world.SomeMessage<TurnCompletedMessage>())
+		{
+			_turnHistoryManager.RecordCurrentState();
+		}
+
+		if (_world.SomeMessage<ResetGameMessage>())
+		{
+			_world.FinishUpdate();
+			ResetGame();
+			return;
+		}
 
 		if (_world.SomeMessage<EndGame>())
 		{
@@ -76,5 +236,119 @@ public class InGameAppState : AppState
 	public void SetTransitionState(AppState state)
 	{
 		_transitionState = state;
+	}
+
+	private void ResetGame()
+	{
+		MoonWorks.Logger.LogInfo("Resetting game...");
+
+		// Destroy all entities marked with DestroyedOnReset component
+		var entityCount = 0;
+		foreach (var entity in _resettableEntitiesFilter.Entities)
+		{
+			_world.Destroy(entity);
+			entityCount++;
+		}
+		MoonWorks.Logger.LogInfo($"Destroyed {entityCount} entities");
+
+		// Clear the board system's internal tracking arrays
+		_chessBoardSystem.ClearBoard();
+
+		// Recreate all game entities
+		InitializeEntities();
+
+		// Clear and reset turn history
+		_turnHistoryManager.ClearHistory();
+		_turnHistoryManager.RecordCurrentState();
+
+		MoonWorks.Logger.LogInfo("Game reset complete");
+	}
+
+	private void RestoreHistoryState(ChessSaveData saveData)
+	{
+		MoonWorks.Logger.LogInfo("Restoring history state...");
+
+		// Destroy all entities marked with DestroyedOnReset component
+		foreach (var entity in _resettableEntitiesFilter.Entities)
+		{
+			_world.Destroy(entity);
+		}
+
+		// Clear the board system's internal tracking arrays
+		_chessBoardSystem.ClearBoard();
+
+		// Initialize board squares and cursor (but not pieces)
+		_chessBoardSystem.InitializeBoardSquaresOnly();
+
+		// Create game state entity
+		var gameStateEntity = _world.CreateEntity();
+		_chessTurnSystem.InitializeGameState(gameStateEntity);
+		_world.Set(gameStateEntity, new DestroyedOnReset());
+
+		// Don't recreate AI - reuse existing AI instance
+		// The AI will work with whatever board state exists in the world
+
+		var gameInProgressEntity = _world.CreateEntity();
+		_world.Set(gameInProgressEntity, new GameInProgress());
+		_world.Set(gameInProgressEntity, new DestroyedOnReset());
+
+		// Apply the historical state (includes AI config)
+		_saveLoadManager.ApplySaveData(saveData);
+
+		// Reset AI thinking state to ensure clean slate after restore
+		_chessAISystem.ResetThinkingState();
+
+		MoonWorks.Logger.LogInfo("History state restored");
+	}
+
+	private void LoadGame(int slot)
+	{
+		MoonWorks.Logger.LogInfo($"Loading game from slot {slot}...");
+
+		var saveData = _saveLoadManager.LoadFromSlot(slot);
+		if (saveData == null)
+		{
+			MoonWorks.Logger.LogWarn($"Load failed - no save file found for slot {slot}");
+			return;
+		}
+
+		// Destroy all entities marked with DestroyedOnReset component
+		var entityCount = 0;
+		foreach (var entity in _resettableEntitiesFilter.Entities)
+		{
+			_world.Destroy(entity);
+			entityCount++;
+		}
+		MoonWorks.Logger.LogInfo($"Destroyed {entityCount} entities for load");
+
+		// Clear the board system's internal tracking arrays
+		_chessBoardSystem.ClearBoard();
+
+		// Initialize board squares and cursor (but not pieces)
+		_chessBoardSystem.InitializeBoardSquaresOnly();
+
+		// Create game state entity
+		var gameStateEntity = _world.CreateEntity();
+		_chessTurnSystem.InitializeGameState(gameStateEntity);
+		_world.Set(gameStateEntity, new DestroyedOnReset());
+
+		// Don't recreate AI - reuse existing AI instance
+		// The AI will work with whatever board state exists in the world
+
+		var gameInProgressEntity = _world.CreateEntity();
+		_world.Set(gameInProgressEntity, new GameInProgress());
+		_world.Set(gameInProgressEntity, new DestroyedOnReset());
+
+		// Apply save data
+		_saveLoadManager.ApplySaveData(saveData);
+
+		// Clear and reset turn history for the newly loaded game
+		_turnHistoryManager.ClearHistory();
+		_turnHistoryManager.RecordCurrentState();
+
+		// Reset AI thinking state to ensure clean slate after load
+		_chessAISystem.ResetThinkingState();
+
+		MoonWorks.Logger.LogInfo("Game load complete");
 	}
 }

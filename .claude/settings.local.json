@@ -1,7 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(dotnet build:*)",
+      "Bash(find:*)",
+      "Bash(export DYLD_LIBRARY_PATH=/Users/dev/Documents/GitHub/Moonworks/Tactician/bin/Debug/net9.0)",
+      "Bash(dotnet run:*)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet add reference:*)",
+      "Bash(dotnet test:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(chmod:*)"
     ]
   }
 }

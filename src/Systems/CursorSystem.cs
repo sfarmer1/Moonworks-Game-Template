@@ -58,6 +58,8 @@ public class CursorSystem : MoonTools.ECS.System
 				{
 					case Direction.Left when HasOutRelation<GamepadNavLeft>(selectedThing):
 						newPosition = GetPositionFromRelation<GamepadNavLeft>(selectedThing);
+						newPosition = newPosition.SetX(newPosition.X + (int)MathF.Round(ChessConstants.TILE_SIZE * 0.5f));
+						newPosition = newPosition.SetY(newPosition.Y   + (int)MathF.Round(ChessConstants.TILE_SIZE * 0.5f));
 						World.Remove<Selected>(selectedThing);
 						newSelection = OutRelationSingleton<GamepadNavLeft>(selectedThing);
 						World.Set(newSelection, new Selected());
@@ -66,6 +68,8 @@ public class CursorSystem : MoonTools.ECS.System
 						break;
 					case Direction.Right when HasOutRelation<GamepadNavRight>(selectedThing):
 						newPosition = GetPositionFromRelation<GamepadNavRight>(selectedThing);
+						newPosition = newPosition.SetX(newPosition.X + (int)MathF.Round(ChessConstants.TILE_SIZE * 0.5f));
+						newPosition = newPosition.SetY(newPosition.Y   + (int)MathF.Round(ChessConstants.TILE_SIZE * 0.5f));
 						World.Remove<Selected>(selectedThing);
 						newSelection = OutRelationSingleton<GamepadNavRight>(selectedThing);
 						World.Set(newSelection, new Selected());
@@ -74,6 +78,8 @@ public class CursorSystem : MoonTools.ECS.System
 						break;
 					case Direction.Up when HasOutRelation<GamepadNavUp>(selectedThing):
 						newPosition = GetPositionFromRelation<GamepadNavUp>(selectedThing);
+						newPosition = newPosition.SetX(newPosition.X + (int)MathF.Round(ChessConstants.TILE_SIZE * 0.5f));
+						newPosition = newPosition.SetY(newPosition.Y   + (int)MathF.Round(ChessConstants.TILE_SIZE * 0.5f));
 						World.Remove<Selected>(selectedThing);
 						newSelection = OutRelationSingleton<GamepadNavUp>(selectedThing);
 						World.Set(newSelection, new Selected());
@@ -82,6 +88,8 @@ public class CursorSystem : MoonTools.ECS.System
 						break;
 					case Direction.Down when HasOutRelation<GamepadNavDown>(selectedThing):
 						newPosition = GetPositionFromRelation<GamepadNavDown>(selectedThing);
+						newPosition = newPosition.SetX(newPosition.X + (int)MathF.Round(ChessConstants.TILE_SIZE * 0.5f));
+						newPosition = newPosition.SetY(newPosition.Y   + (int)MathF.Round(ChessConstants.TILE_SIZE * 0.5f));
 						World.Remove<Selected>(selectedThing);
 						newSelection = OutRelationSingleton<GamepadNavDown>(selectedThing);
 						World.Set(newSelection, new Selected());
