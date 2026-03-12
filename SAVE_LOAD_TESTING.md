@@ -12,6 +12,17 @@
 - **0**: Load from slot 10
 - **F9**: Quick load (backward compatibility, uses slot 0)
 
+### Replay/Rewind (Time Travel)
+- **Z**: Step backward one turn in history (rewind)
+- **X**: Step forward one turn in history (replay)
+- History is recorded automatically after each main player move (not AI moves)
+- Can rewind all the way back to the starting game state
+- **Branching**: Make moves while viewing history to create alternate timelines
+  - Rewind to any past state with Z
+  - Make a different move than originally played
+  - All future history from that point is discarded (new branch created)
+  - AI is disabled while viewing history to allow player-controlled branching
+
 ## Implementation Summary
 The save/load system has been successfully implemented with the following components:
 
@@ -31,9 +42,25 @@ The save/load system has been successfully implemented with the following compon
    - Applies loaded state back to world
 
 4. **Integration** (`src/GameStates/InGameAppState.cs`)
+   - Shift+1 through Shift+0: Save to slots 1-10
+   - 1 through 0: Load from slots 1-10
    - F5: Quick save current game state
    - F9: Quick load from save file
    - Load performs full reset and restores state
+
+5. **TurnHistoryManager** (`src/Serialization/TurnHistoryManager.cs`)
+   - Turn-by-turn history tracking using save data
+   - Automatic recording triggered by `TurnCompletedMessage` (efficient, only checks when turns complete)
+   - Only records states when it's the main player's turn (not AI turns)
+   - Z: Step backward one turn in history
+   - X: Step forward one turn in history
+   - State comparison to avoid duplicate entries
+   - **History branching**: Automatically creates new branches when moves are made from past states
+   - AI disabled when viewing history to allow player-controlled branching
+
+6. **TurnCompletedMessage** (`src/Messages/Messages.cs`)
+   - Message sent by `ChessMoveExecutionSystem` after each move
+   - Triggers history recording only when needed (not every frame)
 
 ## Manual Testing Procedure
 
@@ -81,6 +108,60 @@ The save/load system has been successfully implemented with the following compon
 3. Press **F9** to quick load
 4. Verify the F5/F9 keys still work as expected
 5. Check that `quicksave.json` is created separately from slot files
+
+### Test 5: Rewind Feature (Z Key)
+1. Start a new game
+2. Make several moves (e.g., move 4-5 pieces)
+3. Press **Z** repeatedly to step backward through history
+4. Verify that:
+   - Each press of Z takes you back one move
+   - The board state accurately reflects the historical position
+   - You can rewind all the way to the starting position
+   - Input is disabled while viewing history (can't make moves)
+5. Check console logs to see turn count
+
+### Test 6: Replay Feature (X Key)
+1. After rewinding (Test 5), press **X** to step forward
+2. Verify that:
+   - Each press of X moves forward one move through history
+   - The board state accurately reflects each move
+   - You can replay up to the latest recorded state
+   - Can't step forward beyond the latest state
+
+### Test 7: History Branching (Alternate Timelines)
+1. Start a new game and make 3-4 moves (let AI respond each time)
+2. Press **Z** multiple times to rewind several moves
+3. Now make a different move than originally played
+4. Verify that:
+   - You can select and move pieces while viewing history
+   - AI does not make moves while viewing history (so you control the branch)
+   - The new move creates a new branch automatically
+   - Future history (the discarded moves) is gone
+   - Pressing **X** now does nothing (no future to replay)
+   - New moves continue from the branched point
+   - **AI resumes normal operation** after the branch is created (should log "AI is thinking..." and make a move)
+5. Check console logs for:
+   - "Branched history: discarded N future states" message
+   - "AI thinking state reset" after branch
+   - "AI is thinking..." when AI's turn comes
+   - "AI finished thinking" after AI makes its move
+
+### Test 8: History After Load
+1. Save a game to slot 1 (Shift+1)
+2. Make several more moves
+3. Load from slot 1 (press 1)
+4. Verify that:
+   - History is cleared and starts fresh from the loaded state
+   - Pressing **Z** doesn't show moves before the load
+   - New moves create new history from the loaded point
+
+### Test 9: History After Reset
+1. Make several moves
+2. Press **R** to reset the game
+3. Verify that:
+   - History is cleared
+   - Pressing **Z** does nothing (only initial state exists)
+   - New moves create fresh history
 
 ### Test 4: En Passant and Castling Flags
 1. Set up a position where en passant is possible
@@ -130,14 +211,29 @@ Example save file structure:
 ```
 
 ## Known Limitations
+
+### Save/Load
 1. Only 11 save slots total (1 quicksave + 10 numbered slots)
 2. No UI feedback for save/load operations (only console logging)
 3. No save file versioning/migration system yet
 4. Player input state (selected piece, highlights) is not saved (by design)
 5. No confirmation prompt before overwriting existing saves
 
+### Replay/Rewind
+1. History is stored in memory only (cleared on game restart)
+2. No UI indicator showing current position in history
+3. No fast-forward/rewind to specific turn
+4. History can grow large in long games (all states kept in memory)
+5. No way to save/load history along with save files
+
 ## Future Enhancements
+
+### Completed ✅
 - ✅ Multiple save slots (implemented: 10 numbered slots + quicksave)
+- ✅ Replay/rewind system (implemented: Z/X keys for time travel)
+- ✅ History branching (implemented: make moves while viewing history to create alternate timelines)
+
+### Save/Load
 - Auto-save functionality (e.g., save on every turn)
 - Save file validation and error recovery
 - UI notifications for save/load operations (visual feedback in-game)
@@ -146,3 +242,12 @@ Example save file structure:
 - Cloud save support via MoonWorks UserStorage API
 - Save file compression for smaller file sizes
 - In-game save slot management UI (delete, rename, etc.)
+
+### Replay/Rewind
+- UI indicator showing position in history (e.g., "Turn 5 of 12")
+- Fast-forward/rewind to specific turn (jump to turn N)
+- Visual timeline scrubber
+- History persistence (save/load history with save files)
+- Export game replay to PGN or similar format
+- Playback controls (play/pause auto-replay)
+- Memory optimization (compress old history entries)

@@ -3,6 +3,7 @@ using MoonTools.ECS;
 using MoonWorks;
 using Tactician.Components;
 using Tactician.Data;
+using Tactician.Messages;
 
 namespace Tactician.Systems;
 
@@ -39,6 +40,14 @@ public class ChessMoveExecutionSystem : MoonTools.ECS.System
 
 			// End turn
 			_turnSystem.EndTurn(gameState);
+
+			// Notify that a turn has been completed (for history recording)
+			var currentTurn = Get<CurrentTurn>(gameState);
+			var aiConfig = Get<AiConfig>(gameState);
+			if (currentTurn.Player != aiConfig.AiPlayer)
+			{
+				Send(new TurnCompletedMessage());
+			}
 
 			break; // Only one game state entity
 		}

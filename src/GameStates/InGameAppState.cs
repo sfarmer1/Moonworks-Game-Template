@@ -35,6 +35,7 @@ public class InGameAppState : AppState
 
 	// Save/Load
 	private SaveLoadManager             _saveLoadManager;
+	private TurnHistoryManager          _turnHistoryManager;
 
 	public InGameAppState(App app, AppState transitionState)
 	{
@@ -68,8 +69,12 @@ public class InGameAppState : AppState
 
 		// Initialize save/load manager
 		_saveLoadManager = new SaveLoadManager(_world, _chessBoardSystem);
+		_turnHistoryManager = new TurnHistoryManager(_saveLoadManager);
 
 		InitializeEntities();
+
+		// Record initial game state for history
+		_turnHistoryManager.RecordCurrentState();
 
 		_world.Send(new PlaySongMessage());
 	}
@@ -154,16 +159,53 @@ public class InGameAppState : AppState
 			return;
 		}
 
+		// Handle rewind/replay (Z = step backward, X = step forward)
+		if (_app.Inputs.Keyboard.IsPressed(KeyCode.Z))
+		{
+			var previousState = _turnHistoryManager.StepBackward();
+			if (previousState != null)
+			{
+				_world.FinishUpdate();
+				RestoreHistoryState(previousState);
+				return;
+			}
+		}
+
+		if (_app.Inputs.Keyboard.IsPressed(KeyCode.X))
+		{
+			var nextState = _turnHistoryManager.StepForward();
+			if (nextState != null)
+			{
+				_world.FinishUpdate();
+				RestoreHistoryState(nextState);
+				return;
+			}
+		}
+
 		// Update systems in order
 		_gamepadInputSystem.Update(dt);
 		_cursorSystem.Update(dt);
+
+		// Allow chess input and gameplay even when viewing history (for branching)
 		_chessInputSystem.Update(dt);
 		_chessTurnSystem.Update(dt);
+
+		// Always update AI system so it can resume after branching
+		// The AI will check internally if it should act
 		_chessAISystem.Update(dt);
+
 		_chessMoveExecutionSystem.Update(dt);
+
 		_chessHighlightSystem.Update(dt);
 		_spriteAnimationSystem.Update(dt);
 		_audioSystem.Update(dt);
+
+		// Record history when a turn is completed
+		// This handles branching automatically if viewing history
+		if (_world.SomeMessage<TurnCompletedMessage>())
+		{
+			_turnHistoryManager.RecordCurrentState();
+		}
 
 		if (_world.SomeMessage<ResetGameMessage>())
 		{
@@ -215,7 +257,48 @@ public class InGameAppState : AppState
 		// Recreate all game entities
 		InitializeEntities();
 
+		// Clear and reset turn history
+		_turnHistoryManager.ClearHistory();
+		_turnHistoryManager.RecordCurrentState();
+
 		MoonWorks.Logger.LogInfo("Game reset complete");
+	}
+
+	private void RestoreHistoryState(ChessSaveData saveData)
+	{
+		MoonWorks.Logger.LogInfo("Restoring history state...");
+
+		// Destroy all entities marked with DestroyedOnReset component
+		foreach (var entity in _resettableEntitiesFilter.Entities)
+		{
+			_world.Destroy(entity);
+		}
+
+		// Clear the board system's internal tracking arrays
+		_chessBoardSystem.ClearBoard();
+
+		// Initialize board squares and cursor (but not pieces)
+		_chessBoardSystem.InitializeBoardSquaresOnly();
+
+		// Create game state entity
+		var gameStateEntity = _world.CreateEntity();
+		_chessTurnSystem.InitializeGameState(gameStateEntity);
+		_world.Set(gameStateEntity, new DestroyedOnReset());
+
+		// Don't recreate AI - reuse existing AI instance
+		// The AI will work with whatever board state exists in the world
+
+		var gameInProgressEntity = _world.CreateEntity();
+		_world.Set(gameInProgressEntity, new GameInProgress());
+		_world.Set(gameInProgressEntity, new DestroyedOnReset());
+
+		// Apply the historical state (includes AI config)
+		_saveLoadManager.ApplySaveData(saveData);
+
+		// Reset AI thinking state to ensure clean slate after restore
+		_chessAISystem.ResetThinkingState();
+
+		MoonWorks.Logger.LogInfo("History state restored");
 	}
 
 	private void LoadGame(int slot)
@@ -249,9 +332,8 @@ public class InGameAppState : AppState
 		_chessTurnSystem.InitializeGameState(gameStateEntity);
 		_world.Set(gameStateEntity, new DestroyedOnReset());
 
-		// Set up AI
-		var randomAi = new MinimaxAI(_world, _chessBoardSystem, _moveValidationSystem, Player.Black);
-		_chessAISystem.SetAI(randomAi);
+		// Don't recreate AI - reuse existing AI instance
+		// The AI will work with whatever board state exists in the world
 
 		var gameInProgressEntity = _world.CreateEntity();
 		_world.Set(gameInProgressEntity, new GameInProgress());
@@ -259,6 +341,13 @@ public class InGameAppState : AppState
 
 		// Apply save data
 		_saveLoadManager.ApplySaveData(saveData);
+
+		// Clear and reset turn history for the newly loaded game
+		_turnHistoryManager.ClearHistory();
+		_turnHistoryManager.RecordCurrentState();
+
+		// Reset AI thinking state to ensure clean slate after load
+		_chessAISystem.ResetThinkingState();
 
 		MoonWorks.Logger.LogInfo("Game load complete");
 	}

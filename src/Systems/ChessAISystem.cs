@@ -28,13 +28,29 @@ public class ChessAISystem : MoonTools.ECS.System
 		_ai = ai;
 	}
 
+	/// <summary>
+	/// Resets the AI's internal thinking state.
+	/// Useful when restoring game state or after unexpected state changes.
+	/// </summary>
+	public void ResetThinkingState()
+	{
+		_isThinking = false;
+		_thinkingTimer = 0f;
+		Logger.LogInfo("AI thinking state reset");
+	}
+
 	public override void Update(TimeSpan delta)
 	{
 		if (_ai == null)
+		{
+			Logger.LogWarn("AI is null, skipping update");
 			return;
+		}
 
+		var foundGameState = false;
 		foreach (var gameState in _gameStateFilter.Entities)
 		{
+			foundGameState = true;
 			var phase = Get<CurrentGamePhase>(gameState).Phase;
 
 			if (phase == GamePhase.AIThinking)
@@ -50,10 +66,14 @@ public class ChessAISystem : MoonTools.ECS.System
 				// Accumulate thinking time
 				_thinkingTimer += (float)delta.TotalSeconds;
 
+				Logger.LogInfo($"AI thinking... timer={_thinkingTimer:F2}s, required={MinThinkingTimeSeconds}s");
+
 				// Execute move after minimum thinking time
 				if (_thinkingTimer >= MinThinkingTimeSeconds)
 				{
+					Logger.LogInfo("AI timer complete, getting best move...");
 					var move = _ai.GetBestMove();
+					Logger.LogInfo($"AI GetBestMove returned: valid={move.IsValid()}");
 
 					if (move.IsValid())
 					{
@@ -66,14 +86,25 @@ public class ChessAISystem : MoonTools.ECS.System
 					}
 
 					_isThinking = false;
+					Logger.LogInfo("AI finished thinking");
 				}
 			}
 			else
 			{
+				// Reset thinking state when not in AI thinking phase
+				if (_isThinking)
+				{
+					Logger.LogInfo("AI thinking reset (phase changed)");
+				}
 				_isThinking = false;
 			}
 
 			break; // Only one game state entity
+		}
+
+		if (!foundGameState)
+		{
+			Logger.LogError("AI system: No game state entity found in filter!");
 		}
 	}
 }

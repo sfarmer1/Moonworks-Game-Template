@@ -33,3 +33,4 @@ public readonly record struct ResetGameMessage;
 public readonly record struct CheckMessage(Player PlayerInCheck);
 public readonly record struct CheckmateMessage(Player Winner);
 public readonly record struct StalemateMessage();
+public readonly record struct TurnCompletedMessage();
