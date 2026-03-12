@@ -93,6 +93,81 @@ public class ChessBoardSystem : MoonTools.ECS.System
 		World.Set(cursor, new Depth(-10)); // Cursor renders above everything
 	}
 
+	public void InitializeBoardSquaresOnly()
+	{
+		var centerX = GameDimensions.WIDTH * 0.5f;
+		var centerY = GameDimensions.HEIGHT * 0.5f;
+		var boardPixelSize = ChessConstants.BOARD_SIZE * ChessConstants.TILE_SIZE;
+		var gridStartX = centerX - (boardPixelSize * 0.5f) + (ChessConstants.TILE_SIZE * 0.5f);
+		var gridStartY = centerY - (boardPixelSize * 0.5f) + (ChessConstants.TILE_SIZE * 0.5f);
+
+		// Create 8x8 grid of squares
+		for (int rank = 0; rank < ChessConstants.BOARD_SIZE; rank++)
+		{
+			for (int file = 0; file < ChessConstants.BOARD_SIZE; file++)
+			{
+				var square = World.CreateEntity();
+				var posX = gridStartX + file * ChessConstants.TILE_SIZE;
+				var posY = gridStartY + rank * ChessConstants.TILE_SIZE;
+
+				World.Set(square, new Position(posX, posY));
+				World.Set(square, new BoardPosition(file, rank));
+				World.Set(square, new SpriteAnimation(SpriteAnimations.Pixel));
+				World.Set(square, new DestroyedOnReset());
+
+				// Alternate light/dark squares (chess board pattern)
+				var isLightSquare = (file + rank) % 2 == 0;
+				var squareColor = isLightSquare
+					? new Color(0.9f, 0.9f, 0.8f, 1f)  // Light beige
+					: new Color(0.6f, 0.4f, 0.3f, 1f); // Dark brown
+				World.Set(square, new ColorBlend(squareColor));
+				World.Set(square, new SpriteScale(new System.Numerics.Vector2(ChessConstants.TILE_SIZE, ChessConstants.TILE_SIZE)));
+				World.Set(square, new Depth(10)); // Squares render at base level
+
+				_squares[file, rank] = square;
+			}
+		}
+
+		// Set up navigation relations between squares
+		for (int rank = 0; rank < ChessConstants.BOARD_SIZE; rank++)
+		{
+			for (int file = 0; file < ChessConstants.BOARD_SIZE; file++)
+			{
+				var square = _squares[file, rank];
+
+				// Left neighbor
+				if (file > 0)
+					World.Relate(square, _squares[file - 1, rank], new GamepadNavLeft());
+
+				// Right neighbor
+				if (file < ChessConstants.BOARD_SIZE - 1)
+					World.Relate(square, _squares[file + 1, rank], new GamepadNavRight());
+
+				// Up neighbor
+				if (rank > 0)
+					World.Relate(square, _squares[file, rank - 1], new GamepadNavUp());
+
+				// Down neighbor
+				if (rank < ChessConstants.BOARD_SIZE - 1)
+					World.Relate(square, _squares[file, rank + 1], new GamepadNavDown());
+			}
+		}
+
+		// Select first square and create cursor
+		var firstSquare = _squares[0, 0];
+		World.Set(firstSquare, new Selected());
+
+		var cursor = World.CreateEntity();
+		World.Set(cursor, new Cursor());
+		var firstSquarePos = Get<Position>(firstSquare);
+		World.Set(cursor, firstSquarePos);
+		World.Set(cursor, new CanReceiveDirectionalInput());
+		World.Set(cursor, new DestroyedOnReset());
+		World.Set(cursor, new HasPlayerOwner(0));
+		World.Set(cursor, new SpriteAnimation(SpriteAnimations.Effect_SpinningCoin));
+		World.Set(cursor, new Depth(-10)); // Cursor renders above everything
+	}
+
 	public void SpawnInitialPieces()
 	{
 		// White pieces (bottom, rank 0-1)
@@ -122,7 +197,12 @@ public class ChessBoardSystem : MoonTools.ECS.System
 		SpawnPiece(PieceType.Rook,   Player.Black, new BoardPosition(7, 7));
 	}
 
-	private void SpawnPiece(PieceType type, Player owner, BoardPosition boardPos)
+	public Entity SpawnPieceAt(PieceType type, Player owner, BoardPosition boardPos)
+	{
+		return SpawnPiece(type, owner, boardPos);
+	}
+
+	private Entity SpawnPiece(PieceType type, Player owner, BoardPosition boardPos)
 	{
 		var piece = World.CreateEntity();
 		World.Set(piece, new ChessPiece(type, owner));
@@ -144,6 +224,8 @@ public class ChessBoardSystem : MoonTools.ECS.System
 		World.Set(piece, new Depth(-5)); // Pieces render above squares, below cursor
 
 		_pieces[boardPos.File, boardPos.Rank] = piece;
+
+		return piece;
 	}
 
 	private SpriteAnimationInfo GetSpriteForPiece(PieceType type, Player owner)

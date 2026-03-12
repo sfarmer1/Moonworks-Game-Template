@@ -1,9 +1,11 @@
 using System;
 using MoonTools.ECS;
 using MoonWorks;
+using MoonWorks.Input;
 using Tactician.AI;
 using Tactician.Components;
 using Tactician.Messages;
+using Tactician.Serialization;
 using Tactician.Systems;
 using Tactician_Graphics_Renderer = Tactician.Graphics.Renderer;
 
@@ -30,6 +32,9 @@ public class InGameAppState : AppState
 	private ChessInputSystem            _chessInputSystem;
 	private ChessHighlightSystem        _chessHighlightSystem;
 	private ChessAISystem               _chessAISystem;
+
+	// Save/Load
+	private SaveLoadManager             _saveLoadManager;
 
 	public InGameAppState(App app, AppState transitionState)
 	{
@@ -58,8 +63,11 @@ public class InGameAppState : AppState
 
 		_renderer = new Tactician_Graphics_Renderer(_world, _app.GraphicsDevice, _app.RootTitleStorage,
 													_app.MainWindow.SwapchainFormat);
-		
+
 		_resettableEntitiesFilter = _world.FilterBuilder.Include<DestroyedOnReset>().Build();
+
+		// Initialize save/load manager
+		_saveLoadManager = new SaveLoadManager(_world, _chessBoardSystem);
 
 		InitializeEntities();
 
@@ -91,6 +99,61 @@ public class InGameAppState : AppState
 
 	public override void Update(TimeSpan dt)
 	{
+		// Check if shift is held
+		var shiftHeld = _app.Inputs.Keyboard.IsDown(KeyCode.LeftShift) || _app.Inputs.Keyboard.IsDown(KeyCode.RightShift);
+
+		// Handle save/load input for slots 1-10 (keys 1-9 and 0)
+		// Key 0 maps to slot 10
+		var numberKeys = new (KeyCode key, int slot)[]
+		{
+			(KeyCode.D1, 1),
+			(KeyCode.D2, 2),
+			(KeyCode.D3, 3),
+			(KeyCode.D4, 4),
+			(KeyCode.D5, 5),
+			(KeyCode.D6, 6),
+			(KeyCode.D7, 7),
+			(KeyCode.D8, 8),
+			(KeyCode.D9, 9),
+			(KeyCode.D0, 10)
+		};
+
+		foreach (var (key, slot) in numberKeys)
+		{
+			if (_app.Inputs.Keyboard.IsPressed(key))
+			{
+				if (shiftHeld)
+				{
+					// Shift+Number = Save
+					MoonWorks.Logger.LogInfo($"Save to slot {slot} requested");
+					_saveLoadManager.SaveToSlot(slot);
+				}
+				else
+				{
+					// Number = Load
+					MoonWorks.Logger.LogInfo($"Load from slot {slot} requested");
+					_world.FinishUpdate();
+					LoadGame(slot);
+					return;
+				}
+			}
+		}
+
+		// Keep F5/F9 for backward compatibility (uses slot 0/quicksave)
+		if (_app.Inputs.Keyboard.IsPressed(KeyCode.F5))
+		{
+			MoonWorks.Logger.LogInfo("Quick save requested (F5)");
+			_saveLoadManager.QuickSave();
+		}
+
+		if (_app.Inputs.Keyboard.IsPressed(KeyCode.F9))
+		{
+			MoonWorks.Logger.LogInfo("Quick load requested (F9)");
+			_world.FinishUpdate();
+			LoadGame(0);
+			return;
+		}
+
 		// Update systems in order
 		_gamepadInputSystem.Update(dt);
 		_cursorSystem.Update(dt);
@@ -153,5 +216,50 @@ public class InGameAppState : AppState
 		InitializeEntities();
 
 		MoonWorks.Logger.LogInfo("Game reset complete");
+	}
+
+	private void LoadGame(int slot)
+	{
+		MoonWorks.Logger.LogInfo($"Loading game from slot {slot}...");
+
+		var saveData = _saveLoadManager.LoadFromSlot(slot);
+		if (saveData == null)
+		{
+			MoonWorks.Logger.LogWarn($"Load failed - no save file found for slot {slot}");
+			return;
+		}
+
+		// Destroy all entities marked with DestroyedOnReset component
+		var entityCount = 0;
+		foreach (var entity in _resettableEntitiesFilter.Entities)
+		{
+			_world.Destroy(entity);
+			entityCount++;
+		}
+		MoonWorks.Logger.LogInfo($"Destroyed {entityCount} entities for load");
+
+		// Clear the board system's internal tracking arrays
+		_chessBoardSystem.ClearBoard();
+
+		// Initialize board squares and cursor (but not pieces)
+		_chessBoardSystem.InitializeBoardSquaresOnly();
+
+		// Create game state entity
+		var gameStateEntity = _world.CreateEntity();
+		_chessTurnSystem.InitializeGameState(gameStateEntity);
+		_world.Set(gameStateEntity, new DestroyedOnReset());
+
+		// Set up AI
+		var randomAi = new MinimaxAI(_world, _chessBoardSystem, _moveValidationSystem, Player.Black);
+		_chessAISystem.SetAI(randomAi);
+
+		var gameInProgressEntity = _world.CreateEntity();
+		_world.Set(gameInProgressEntity, new GameInProgress());
+		_world.Set(gameInProgressEntity, new DestroyedOnReset());
+
+		// Apply save data
+		_saveLoadManager.ApplySaveData(saveData);
+
+		MoonWorks.Logger.LogInfo("Game load complete");
 	}
 }
